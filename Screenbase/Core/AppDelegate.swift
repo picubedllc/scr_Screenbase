@@ -71,7 +71,9 @@ struct AppDependencies {
         case .dev, .prod:
             let metadataManager = MetadataManager(
                 local: FileLocalMetadataStore(),
-                remote: FirestoreMetadataService()
+                remote: FirestoreMetadataService(),
+                drawingStore: FileAnnotationDrawingStore(),
+                imageUpload: FirebaseImageUploadService()
             )
             self.init(
                 authManager: AuthManager(service: FirebaseAuthServiceLive()),
@@ -90,7 +92,9 @@ struct AppDependencies {
     static var mock: AppDependencies {
         let metadataManager = MetadataManager(
             local: InMemoryLocalMetadataStore(),
-            remote: MockMetadataService()
+            remote: MockMetadataService(),
+            drawingStore: InMemoryAnnotationDrawingStore(),
+            imageUpload: MockImageUploadService()
         )
         return AppDependencies(
             authManager: AuthManager(service: AuthServiceMock()),

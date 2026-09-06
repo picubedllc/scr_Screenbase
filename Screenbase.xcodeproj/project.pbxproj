@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		6025A5D765E97AAF72F82794 /* FirebaseStorage in Frameworks */ = {isa = PBXBuildFile; productRef = 46A777FD69180390BA65B98B /* FirebaseStorage */; };
 		62A100053036EAA100281050 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 62A100023036EAA100281050 /* FirebaseAuth */; };
 		62A100063036EAA100281050 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 62A100033036EAA100281050 /* FirebaseFirestore */; };
 		62A100073036EAA100281050 /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = 62A100043036EAA100281050 /* FirebaseAnalytics */; };
@@ -80,6 +81,7 @@
 				62A1000A3036EAA100281050 /* PhosphorSwift in Frameworks */,
 				B66D0068D96E27191A2B885C /* RevenueCat in Frameworks */,
 				AFE14F54583426EDC4CC51EA /* RevenueCatUI in Frameworks */,
+				6025A5D765E97AAF72F82794 /* FirebaseStorage in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -146,6 +148,7 @@
 				62A100093036EAA100281050 /* PhosphorSwift */,
 				3F72EE19A68C2050ACAE2E9B /* RevenueCat */,
 				348A2F6749D5879ECDBC200D /* RevenueCatUI */,
+				46A777FD69180390BA65B98B /* FirebaseStorage */,
 			);
 			productName = Screenbase;
 			productReference = 622009A63036E99900281050 /* Screenbase.app */;
@@ -455,6 +458,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0.0;
+				OTHER_LDFLAGS = "-ObjC";
 				PRODUCT_BUNDLE_IDENTIFIER = com.getscreenbase.Screenbase;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -498,6 +502,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0.0;
+				OTHER_LDFLAGS = "-ObjC";
 				PRODUCT_BUNDLE_IDENTIFIER = com.getscreenbase.Screenbase;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -676,6 +681,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 8A1FFC622A22E488EEA19F31 /* XCRemoteSwiftPackageReference "purchases-ios-spm" */;
 			productName = RevenueCat;
+		};
+		46A777FD69180390BA65B98B /* FirebaseStorage */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 62A100013036EAA100281050 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseStorage;
 		};
 		62A100023036EAA100281050 /* FirebaseAuth */ = {
 			isa = XCSwiftPackageProductDependency;

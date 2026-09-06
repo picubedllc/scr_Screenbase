@@ -5,22 +5,45 @@
 
 import Foundation
 import Observation
+import UIKit
 
 @MainActor
 @Observable
 final class MetadataManager {
     private let local: any LocalMetadataStore
     private let remote: any MetadataService
+    private let drawingStore: any AnnotationDrawingStore
+    private let imageUpload: any ImageUploadService
 
     private(set) var screenshots: [ScreenshotRecord] = []
     private(set) var collections: [CollectionRecord] = []
     private(set) var tags: [TagRecord] = []
     private(set) var userId: String?
 
-    init(local: any LocalMetadataStore, remote: any MetadataService) {
+    /// Soft-failure message when Storage upload fails after a successful local save.
+    private(set) var lastVisualAnnotationUploadError: String?
+
+    init(
+        local: any LocalMetadataStore,
+        remote: any MetadataService,
+        drawingStore: any AnnotationDrawingStore,
+        imageUpload: any ImageUploadService
+    ) {
         self.local = local
         self.remote = remote
+        self.drawingStore = drawingStore
+        self.imageUpload = imageUpload
         apply(local.load())
+    }
+
+    /// Preview/test convenience with in-memory drawing store and mock uploads.
+    convenience init(local: any LocalMetadataStore, remote: any MetadataService) {
+        self.init(
+            local: local,
+            remote: remote,
+            drawingStore: InMemoryAnnotationDrawingStore(),
+            imageUpload: MockImageUploadService()
+        )
     }
 
     /// Scopes Firestore writes to the signed-in anonymous user.
@@ -55,8 +78,50 @@ final class MetadataManager {
         }
     }
 
+    func loadDrawingData(screenshotId: String) -> Data? {
+        drawingStore.loadDrawing(screenshotId: screenshotId)
+    }
+
+    /// Saves editable drawing locally, uploads the overlay PNG to Storage when possible, and syncs metadata.
+    /// Local save always succeeds even if remote upload fails.
+    @discardableResult
+    func saveVisualAnnotation(
+        screenshotId: String,
+        drawingData: Data,
+        overlayImage: UIImage
+    ) async throws -> Bool {
+        lastVisualAnnotationUploadError = nil
+        guard let index = screenshots.firstIndex(where: { $0.id == screenshotId }) else { return false }
+
+        try drawingStore.saveDrawing(screenshotId: screenshotId, data: drawingData)
+
+        var downloadURL: String?
+        if let userId {
+            do {
+                let path = "users/\(userId)/annotations/\(screenshotId)"
+                let url = try await imageUpload.uploadImage(image: overlayImage, path: path)
+                downloadURL = url.absoluteString
+            } catch {
+                lastVisualAnnotationUploadError = "Annotation saved on device, but cloud upload failed."
+            }
+        }
+
+        screenshots[index].hasVisualAnnotation = true
+        if let downloadURL {
+            screenshots[index].visualAnnotationURL = downloadURL
+        }
+        screenshots[index].updatedAt = Date()
+        let updated = screenshots[index]
+        try persistLocal()
+        await syncRemote { [remote] in
+            try await remote.syncScreenshot(updated, userId: $0)
+        }
+        return lastVisualAnnotationUploadError == nil
+    }
+
     func deleteScreenshot(id: String) async throws {
         screenshots.removeAll { $0.id == id }
+        try? drawingStore.deleteDrawing(screenshotId: id)
         try persistLocal()
         await syncRemote { [remote] in
             try await remote.deleteScreenshot(id: id, userId: $0)

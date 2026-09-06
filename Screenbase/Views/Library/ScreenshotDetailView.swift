@@ -36,6 +36,23 @@ struct ScreenshotDetailView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar(.visible, for: .navigationBar)
         .toolbarBackground(.hidden, for: .navigationBar)
+        .toolbar {
+            if let viewModel, viewModel.hasVisualAnnotation {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        viewModel.toggleAnnotationsVisible()
+                    } label: {
+                        Text(viewModel.areAnnotationsVisible ? "On" : "Original")
+                            .font(ScreenbaseFonts.display(size: 15, weight: .semibold))
+                    }
+                    .accessibilityLabel(
+                        viewModel.areAnnotationsVisible
+                            ? "Annotations on, show original"
+                            : "Original, show annotations"
+                    )
+                }
+            }
+        }
         .onAppear {
             TabBarVisibilityAnimation.set($tabBarVisibility, to: .hidden)
             if viewModel == nil {
@@ -90,16 +107,34 @@ struct ScreenshotDetailView: View {
                 get: { viewModel.isSharePresented },
                 set: { viewModel.isSharePresented = $0 }
             )) {
-                if let image = viewModel.image {
+                if let image = viewModel.shareImage {
                     ShareActivityView(activityItems: [image])
                         .presentationDetents([.medium, .large])
+                }
+            }
+            .fullScreenCover(isPresented: Binding(
+                get: { viewModel.isMarkupEditorPresented },
+                set: { presented in
+                    if !presented {
+                        viewModel.markupEditorDidDismiss()
+                    } else {
+                        viewModel.isMarkupEditorPresented = true
+                    }
+                }
+            )) {
+                if let image = viewModel.image {
+                    MarkupEditorView(
+                        screenshotId: screenshotId,
+                        baseImage: image,
+                        metadataManager: metadataManager
+                    )
                 }
             }
             .fullScreenCover(isPresented: Binding(
                 get: { viewModel.isFullscreenPresented },
                 set: { viewModel.isFullscreenPresented = $0 }
             )) {
-                if let image = viewModel.image {
+                if let image = viewModel.displayedImage {
                     ScreenshotFullscreenView(image: image) {
                         viewModel.isFullscreenPresented = false
                     }
@@ -119,7 +154,7 @@ struct ScreenshotDetailView: View {
             case .missing:
                 missingAssetPlaceholder
             case .loaded:
-                if let image = viewModel.image {
+                if let image = viewModel.displayedImage ?? viewModel.image {
                     Color.black
                         .overlay {
                             Image(uiImage: image)
@@ -161,41 +196,52 @@ struct ScreenshotDetailView: View {
     }
 
     private func actionBar(viewModel: ScreenshotDetailViewModel) -> some View {
-        HStack(spacing: 12) {
-            ScreenshotDetailActionButton(
-                icon: .noteBlank,
-                title: "Notes",
-                isActive: viewModel.isNotesActionActive
-            ) {
-                viewModel.presentAnnotationEditor()
-            }
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 12) {
+                ScreenshotDetailActionButton(
+                    icon: .noteBlank,
+                    title: "Notes",
+                    isActive: viewModel.isNotesActionActive
+                ) {
+                    viewModel.presentAnnotationEditor()
+                }
 
-            ScreenshotDetailActionButton(
-                icon: .tagSimple,
-                title: "Tags",
-                isActive: viewModel.isTagsActionActive
-            ) {
-                viewModel.presentTagsSheet()
-            }
+                ScreenshotDetailActionButton(
+                    icon: .highlighter,
+                    title: "Markup",
+                    isActive: viewModel.isMarkupActionActive,
+                    isEnabled: viewModel.canMarkup
+                ) {
+                    viewModel.presentMarkupEditor()
+                }
 
-            ScreenshotDetailActionButton(
-                icon: .folderSimple,
-                title: "Collections",
-                isActive: viewModel.isCollectionsActionActive
-            ) {
-                viewModel.presentCollectionsSheet()
-            }
+                ScreenshotDetailActionButton(
+                    icon: .tagSimple,
+                    title: "Tags",
+                    isActive: viewModel.isTagsActionActive
+                ) {
+                    viewModel.presentTagsSheet()
+                }
 
-            ScreenshotDetailActionButton(
-                icon: .export,
-                title: "Share",
-                isActive: viewModel.isShareActionActive,
-                isEnabled: viewModel.canShare
-            ) {
-                viewModel.presentShare()
+                ScreenshotDetailActionButton(
+                    icon: .folderSimple,
+                    title: "Collections",
+                    isActive: viewModel.isCollectionsActionActive
+                ) {
+                    viewModel.presentCollectionsSheet()
+                }
+
+                ScreenshotDetailActionButton(
+                    icon: .export,
+                    title: "Share",
+                    isActive: viewModel.isShareActionActive,
+                    isEnabled: viewModel.canShare
+                ) {
+                    viewModel.presentShare()
+                }
             }
+            .padding(.horizontal, ScreenbaseMetrics.edgePadding)
         }
-        .padding(.horizontal, ScreenbaseMetrics.edgePadding)
         .padding(.top, 16)
         .padding(.bottom, 12)
         .frame(maxWidth: .infinity)
@@ -327,7 +373,7 @@ private struct ScreenshotDetailActionButton: View {
                 icon.regular
                     .color(isEnabled ? ScreenbaseColors.ink : ScreenbaseColors.gray)
                     .frame(width: 28, height: 28)
-                    .frame(maxWidth: .infinity)
+                    .frame(width: 72)
                     .frame(height: 56)
                     .background(
                         RoundedRectangle(cornerRadius: 16, style: .continuous)
@@ -344,7 +390,7 @@ private struct ScreenshotDetailActionButton: View {
                     .lineLimit(1)
                     .minimumScaleFactor(0.85)
             }
-            .frame(maxWidth: .infinity)
+            .frame(width: 72)
         }
         .buttonStyle(.plain)
         .disabled(!isEnabled)
