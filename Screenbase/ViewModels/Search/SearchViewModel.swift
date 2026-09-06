@@ -20,10 +20,14 @@ final class SearchViewModel {
         let id: String
         let assetLocalIdentifier: String
         let matchSources: [String]
+        let score: Int
     }
 
     private let metadataManager: MetadataManager
     private let recentStore: RecentSearchStore
+    private let searchEngine = RankedSearchEngine()
+    /// Free/Pro gate for OCR hits (SCR-24). Default true until PurchaseManager gating ships.
+    var includeOCRInSearch: Bool = true
 
     var query: String = "" {
         didSet { refreshResults() }
@@ -84,48 +88,38 @@ final class SearchViewModel {
             return
         }
 
-        results = Self.search(query: trimmed, metadata: metadataManager)
+        results = Self.search(
+            query: trimmed,
+            metadata: metadataManager,
+            includeOCR: includeOCRInSearch,
+            engine: searchEngine
+        )
         contentState = results.isEmpty ? .emptyResults : .results
     }
 
-    /// Basic multi-source match (SCR-15). SCR-16 upgrades to ranked relevance.
-    static func search(query: String, metadata: MetadataManager) -> [ResultItem] {
-        let tagsById = Dictionary(uniqueKeysWithValues: metadata.tags.map { ($0.id, $0) })
-        let collectionsById = Dictionary(uniqueKeysWithValues: metadata.collections.map { ($0.id, $0) })
-
-        var items: [ResultItem] = []
-        for record in metadata.screenshots {
-            var sources: [String] = []
-            if (record.annotationText ?? "").localizedCaseInsensitiveContains(query) {
-                sources.append("Note")
-            }
-            if (record.ocrText ?? "").localizedCaseInsensitiveContains(query) {
-                sources.append("OCR")
-            }
-            for tagId in record.tagIds {
-                if let name = tagsById[tagId]?.name,
-                   name.localizedCaseInsensitiveContains(query) {
-                    sources.append("Tag")
-                    break
-                }
-            }
-            for collectionId in record.collectionIds {
-                if let name = collectionsById[collectionId]?.name,
-                   name.localizedCaseInsensitiveContains(query) {
-                    sources.append("Collection")
-                    break
-                }
-            }
-            guard !sources.isEmpty else { continue }
-            items.append(
-                ResultItem(
-                    id: record.id,
-                    assetLocalIdentifier: record.assetLocalIdentifier,
-                    matchSources: sources
-                )
+    static func search(
+        query: String,
+        metadata: MetadataManager,
+        includeOCR: Bool = true,
+        engine: RankedSearchEngine = RankedSearchEngine()
+    ) -> [ResultItem] {
+        let hits = engine.search(
+            query: query,
+            in: RankedSearchEngine.Input(
+                screenshots: metadata.screenshots,
+                tags: metadata.tags,
+                collections: metadata.collections,
+                includeOCR: includeOCR
+            )
+        )
+        return hits.map {
+            ResultItem(
+                id: $0.screenshotId,
+                assetLocalIdentifier: $0.assetLocalIdentifier,
+                matchSources: $0.matchSources,
+                score: $0.score
             )
         }
-        return items
     }
 }
 
