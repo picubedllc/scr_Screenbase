@@ -216,7 +216,7 @@ struct ScreenshotDetailView: View {
                 }
 
                 ScreenshotDetailActionButton(
-                    icon: .tagSimple,
+                    icon: .tag,
                     title: "Tags",
                     isActive: viewModel.isTagsActionActive
                 ) {
@@ -370,7 +370,7 @@ private struct ScreenshotDetailActionButton: View {
     var body: some View {
         Button(action: action) {
             VStack(spacing: 8) {
-                icon.regular
+                icon.bold
                     .color(isEnabled ? ScreenbaseColors.ink : ScreenbaseColors.gray)
                     .frame(width: 28, height: 28)
                     .frame(width: 72)

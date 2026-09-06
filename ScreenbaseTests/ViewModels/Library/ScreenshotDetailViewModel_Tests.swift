@@ -141,7 +141,7 @@ struct ScreenshotDetailViewModel_Tests {
         record.hasVisualAnnotation = true
         try await metadata.upsertScreenshot(record)
 
-        let base = UIImage(systemName: "photo")!
+        let base = try #require(UIImage(systemName: "photo"))
         let photos = PhotosManager(service: MockPhotosService(
             status: .authorized,
             fullImages: [record.assetLocalIdentifier: base]

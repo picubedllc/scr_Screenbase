@@ -60,7 +60,7 @@ final class ScreenshotDetailViewModel {
         self.metadataManager = metadataManager
         self.photosManager = photosManager
         self.imageTargetSize = imageTargetSize
-        self.areAnnotationsVisible = showAnnotationsByDefault
+        areAnnotationsVisible = showAnnotationsByDefault
     }
 
     var screenshot: ScreenshotRecord? {
@@ -196,7 +196,8 @@ final class ScreenshotDetailViewModel {
                from: data,
                canvasSize: image.size,
                scale: image.scale
-           ) {
+           )
+        {
             overlayImage = overlay
             return
         }

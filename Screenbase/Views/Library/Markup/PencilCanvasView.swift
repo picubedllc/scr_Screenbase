@@ -43,7 +43,8 @@ struct PencilCanvasView: UIViewRepresentable {
         if let current = canvas.tool as? PKInkingTool,
            current.inkType == tool.inkType,
            current.color == tool.color,
-           abs(current.width - tool.width) < 0.1 {
+           abs(current.width - tool.width) < 0.1
+        {
             // Keep existing tool instance when unchanged.
         } else {
             canvas.tool = tool
@@ -86,7 +87,7 @@ struct PencilCanvasView: UIViewRepresentable {
                 queue: .main
             ) { [weak self] _ in
                 guard let self else { return }
-                self.parent.onUndoManagerChange?(manager)
+                parent.onUndoManagerChange?(manager)
             }
             redoObserver = center.addObserver(
                 forName: .NSUndoManagerDidRedoChange,
@@ -94,7 +95,7 @@ struct PencilCanvasView: UIViewRepresentable {
                 queue: .main
             ) { [weak self] _ in
                 guard let self else { return }
-                self.parent.onUndoManagerChange?(manager)
+                parent.onUndoManagerChange?(manager)
             }
         }
 

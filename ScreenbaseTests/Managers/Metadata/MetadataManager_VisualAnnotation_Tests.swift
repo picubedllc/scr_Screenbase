@@ -25,7 +25,7 @@ struct MetadataManager_VisualAnnotation_Tests {
         try await sut.upsertScreenshot(.mock)
 
         let drawingData = Data("drawing-bytes".utf8)
-        let overlay = UIImage(systemName: "pencil.tip")!
+        let overlay = try #require(UIImage(systemName: "pencil.tip"))
 
         let uploaded = try await sut.saveVisualAnnotation(
             screenshotId: ScreenshotRecord.mock.id,
@@ -59,7 +59,7 @@ struct MetadataManager_VisualAnnotation_Tests {
         let uploaded = try await sut.saveVisualAnnotation(
             screenshotId: ScreenshotRecord.mock.id,
             drawingData: Data("local".utf8),
-            overlayImage: UIImage(systemName: "pencil.tip")!
+            overlayImage: #require(UIImage(systemName: "pencil.tip"))
         )
 
         #expect(uploaded == false)

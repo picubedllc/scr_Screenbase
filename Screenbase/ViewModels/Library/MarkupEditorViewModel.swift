@@ -33,7 +33,8 @@ final class MarkupEditorViewModel {
         self.baseImage = baseImage
         self.metadataManager = metadataManager
         if let data = metadataManager.loadDrawingData(screenshotId: screenshotId),
-           let existing = try? PKDrawing(data: data) {
+           let existing = try? PKDrawing(data: data)
+        {
             drawing = existing
         }
     }

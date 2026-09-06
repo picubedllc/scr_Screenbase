@@ -127,7 +127,7 @@ struct MarkupEditorView: View {
             Spacer()
 
             HStack(spacing: 8) {
-                Ph.highlighter.regular
+                Ph.highlighter.bold
                     .color(ScreenbaseColors.ink)
                     .frame(width: 22, height: 22)
                 Text("Highlighter")
@@ -141,9 +141,9 @@ struct MarkupEditorView: View {
                 get: { viewModel.inkColor },
                 set: { viewModel.inkColor = $0 }
             ), supportsOpacity: false)
-            .labelsHidden()
-            .disabled(viewModel.isSaving)
-            .accessibilityLabel("Highlighter color")
+                .labelsHidden()
+                .disabled(viewModel.isSaving)
+                .accessibilityLabel("Highlighter color")
         }
         .foregroundStyle(ScreenbaseColors.ink)
         .padding(.horizontal, ScreenbaseMetrics.edgePadding)

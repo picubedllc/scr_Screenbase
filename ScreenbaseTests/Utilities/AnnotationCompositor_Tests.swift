@@ -13,8 +13,8 @@ import UIKit
 struct AnnotationCompositor_Tests {
     @Test("Composite without overlay returns the base image")
     @MainActor
-    func compositeWithoutOverlayReturnsBase() {
-        let base = UIImage(systemName: "photo")!
+    func compositeWithoutOverlayReturnsBase() throws {
+        let base = try #require(UIImage(systemName: "photo"))
         let result = AnnotationCompositor.composite(base: base, overlay: nil)
         #expect(result.size == base.size)
     }
