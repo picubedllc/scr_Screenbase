@@ -64,8 +64,7 @@ struct ScreenbaseDestructiveButtonStyle: ButtonStyle {
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(.system(size: 16, weight: .semibold))
-            .foregroundStyle(ScreenbaseColors.red)
+            .screenbaseDangerText()
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.vertical, 12)
             .opacity(buttonOpacity(isPressed: configuration.isPressed, isEnabled: isEnabled))
@@ -134,8 +133,7 @@ extension View {
     }
 
     func destructiveButtonStyle() -> some View {
-        font(.system(size: 16, weight: .semibold))
-            .foregroundStyle(ScreenbaseColors.red)
+        screenbaseDangerText()
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.vertical, 12)
     }
