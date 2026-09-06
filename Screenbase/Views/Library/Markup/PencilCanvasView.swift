@@ -10,8 +10,7 @@ import UIKit
 /// Transparent PencilKit canvas for annotation overlays.
 struct PencilCanvasView: UIViewRepresentable {
     @Binding var drawing: PKDrawing
-    var inkColor: UIColor
-    var inkWidth: CGFloat
+    var tool: PKTool
     var allowsDrawing: Bool
     var onUndoManagerChange: ((UndoManager?) -> Void)?
 
@@ -28,7 +27,7 @@ struct PencilCanvasView: UIViewRepresentable {
         canvas.overrideUserInterfaceStyle = .light
         canvas.drawingPolicy = .anyInput
         canvas.isScrollEnabled = false
-        canvas.tool = PKInkingTool(.marker, color: inkColor, width: inkWidth)
+        canvas.tool = tool
         canvas.isUserInteractionEnabled = allowsDrawing
         context.coordinator.observeUndoManager(of: canvas)
         return canvas
@@ -39,18 +38,27 @@ struct PencilCanvasView: UIViewRepresentable {
         if canvas.drawing != drawing {
             canvas.drawing = drawing
         }
-        let tool = PKInkingTool(.marker, color: inkColor, width: inkWidth)
-        if let current = canvas.tool as? PKInkingTool,
-           current.inkType == tool.inkType,
-           current.color == tool.color,
-           abs(current.width - tool.width) < 0.1
-        {
-            // Keep existing tool instance when unchanged.
-        } else {
+        if !Self.toolsMatch(canvas.tool, tool) {
             canvas.tool = tool
         }
         canvas.isUserInteractionEnabled = allowsDrawing
         context.coordinator.observeUndoManager(of: canvas)
+    }
+
+    private static func toolsMatch(_ lhs: PKTool, _ rhs: PKTool) -> Bool {
+        switch (lhs, rhs) {
+        case (let left as PKInkingTool, let right as PKInkingTool):
+            left.inkType == right.inkType
+                && left.color == right.color
+                && abs(left.width - right.width) < 0.1
+        case (let left as PKEraserTool, let right as PKEraserTool):
+            left.eraserType == right.eraserType
+                && abs(left.width - right.width) < 0.1
+        case (is PKLassoTool, is PKLassoTool):
+            true
+        default:
+            false
+        }
     }
 
     final class Coordinator: NSObject, PKCanvasViewDelegate {

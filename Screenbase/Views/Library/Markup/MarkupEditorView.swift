@@ -89,8 +89,7 @@ struct MarkupEditorView: View {
                                 viewModel.refreshUndoState()
                             }
                         ),
-                        inkColor: viewModel.inkUIColor,
-                        inkWidth: viewModel.inkWidth,
+                        tool: viewModel.pkTool,
                         allowsDrawing: true,
                         onUndoManagerChange: { manager in
                             viewModel.bindUndoManager(manager)
@@ -105,50 +104,83 @@ struct MarkupEditorView: View {
     }
 
     private var toolBar: some View {
-        HStack(spacing: 20) {
-            Button {
-                viewModel.undo()
-            } label: {
-                Image(systemName: "arrow.uturn.backward")
-                    .font(.system(size: 18, weight: .semibold))
+        VStack(spacing: 12) {
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 10) {
+                    ForEach(MarkupTool.allCases) { tool in
+                        toolButton(tool)
+                    }
+                }
+                .padding(.horizontal, ScreenbaseMetrics.edgePadding)
             }
-            .disabled(!viewModel.canUndo || viewModel.isSaving)
-            .accessibilityLabel("Undo")
 
-            Button {
-                viewModel.redo()
-            } label: {
-                Image(systemName: "arrow.uturn.forward")
-                    .font(.system(size: 18, weight: .semibold))
-            }
-            .disabled(!viewModel.canRedo || viewModel.isSaving)
-            .accessibilityLabel("Redo")
+            HStack(spacing: 16) {
+                Button {
+                    viewModel.undo()
+                } label: {
+                    Image(systemName: "arrow.uturn.backward")
+                        .font(.system(size: 17, weight: .semibold))
+                }
+                .disabled(!viewModel.canUndo || viewModel.isSaving)
+                .accessibilityLabel("Undo")
 
-            Spacer()
+                Button {
+                    viewModel.redo()
+                } label: {
+                    Image(systemName: "arrow.uturn.forward")
+                        .font(.system(size: 17, weight: .semibold))
+                }
+                .disabled(!viewModel.canRedo || viewModel.isSaving)
+                .accessibilityLabel("Redo")
 
-            HStack(spacing: 8) {
-                Ph.highlighter.bold
-                    .color(ScreenbaseColors.ink)
-                    .frame(width: 22, height: 22)
-                Text("Highlighter")
+                Text(viewModel.selectedTool.title)
                     .font(ScreenbaseFonts.display(size: 15, weight: .semibold))
                     .foregroundStyle(ScreenbaseColors.ink)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+
+                if viewModel.showsColorPicker {
+                    ColorPicker(
+                        "Color",
+                        selection: Binding(
+                            get: { viewModel.inkColor },
+                            set: { viewModel.inkColor = $0 }
+                        ),
+                        supportsOpacity: false
+                    )
+                    .labelsHidden()
+                    .disabled(viewModel.isSaving)
+                    .accessibilityLabel("Ink color")
+                }
             }
-
-            Spacer()
-
-            ColorPicker("Color", selection: Binding(
-                get: { viewModel.inkColor },
-                set: { viewModel.inkColor = $0 }
-            ), supportsOpacity: false)
-                .labelsHidden()
-                .disabled(viewModel.isSaving)
-                .accessibilityLabel("Highlighter color")
+            .foregroundStyle(ScreenbaseColors.ink)
+            .padding(.horizontal, ScreenbaseMetrics.edgePadding)
         }
-        .foregroundStyle(ScreenbaseColors.ink)
-        .padding(.horizontal, ScreenbaseMetrics.edgePadding)
-        .padding(.vertical, 14)
+        .padding(.vertical, 12)
         .background(ScreenbaseColors.elevated)
+    }
+
+    private func toolButton(_ tool: MarkupTool) -> some View {
+        let isSelected = viewModel.selectedTool == tool
+        return Button {
+            viewModel.selectTool(tool)
+        } label: {
+            tool.icon.bold
+                .color(isSelected ? ScreenbaseColors.ink : ScreenbaseColors.gray)
+                .frame(width: 22, height: 22)
+                .frame(width: 44, height: 44)
+                .background(
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .fill(isSelected ? ScreenbaseColors.lightGray : Color.clear)
+                )
+                .overlay {
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .strokeBorder(ScreenbaseColors.ink, lineWidth: isSelected ? 1.5 : 0)
+                }
+        }
+        .buttonStyle(.plain)
+        .disabled(viewModel.isSaving)
+        .accessibilityLabel(tool.title)
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
 
     private static func fitScale(imageSize: CGSize, in container: CGSize) -> CGFloat {

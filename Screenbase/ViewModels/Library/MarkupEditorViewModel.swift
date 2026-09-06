@@ -16,6 +16,7 @@ final class MarkupEditorViewModel {
     let baseImage: UIImage
 
     var drawing = PKDrawing()
+    var selectedTool: MarkupTool = .marker
     var inkColor: Color = .yellow
     var isSaving = false
     var saveWarning: String?
@@ -24,14 +25,15 @@ final class MarkupEditorViewModel {
 
     private let metadataManager: MetadataManager
     private weak var undoManager: UndoManager?
-
-    /// Marker width tuned for highlighter-style strokes.
-    let inkWidth: CGFloat = 28
+    private var widthsByTool: [MarkupTool: CGFloat] = [:]
 
     init(screenshotId: String, baseImage: UIImage, metadataManager: MetadataManager) {
         self.screenshotId = screenshotId
         self.baseImage = baseImage
         self.metadataManager = metadataManager
+        for tool in MarkupTool.allCases {
+            widthsByTool[tool] = tool.defaultWidth
+        }
         if let data = metadataManager.loadDrawingData(screenshotId: screenshotId),
            let existing = try? PKDrawing(data: data)
         {
@@ -41,6 +43,23 @@ final class MarkupEditorViewModel {
 
     var inkUIColor: UIColor {
         UIColor(inkColor)
+    }
+
+    var inkWidth: CGFloat {
+        get { widthsByTool[selectedTool] ?? selectedTool.defaultWidth }
+        set { widthsByTool[selectedTool] = newValue }
+    }
+
+    var showsColorPicker: Bool {
+        selectedTool.usesColor
+    }
+
+    var pkTool: PKTool {
+        selectedTool.makePKTool(color: inkUIColor, width: inkWidth)
+    }
+
+    func selectTool(_ tool: MarkupTool) {
+        selectedTool = tool
     }
 
     func bindUndoManager(_ manager: UndoManager?) {
