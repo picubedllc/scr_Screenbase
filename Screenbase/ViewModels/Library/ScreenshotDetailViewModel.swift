@@ -36,6 +36,11 @@ final class ScreenshotDetailViewModel {
     var membershipNameDraft = ""
     var isSharePresented = false
     var isFullscreenPresented = false
+    var isOCRTextPresented = false
+    var isLoadingOCRText = false
+    var ocrDisplayText: String?
+    var didCopyOCRText = false
+    var ocrLoadError: String?
 
     enum MembershipNameEditorMode: Equatable {
         case collection
@@ -45,6 +50,7 @@ final class ScreenshotDetailViewModel {
     private let metadataManager: MetadataManager
     private let photosManager: PhotosManager
     private let imageTargetSize: CGSize
+    private let ocrService: any ScreenshotOCRService
 
     init(
         screenshotId: String,
@@ -53,12 +59,14 @@ final class ScreenshotDetailViewModel {
         imageTargetSize: CGSize,
         showAnnotationsByDefault: Bool = UserDefaults.standard.bool(
             forKey: SettingsViewModel.Keys.showAnnotationsByDefault
-        )
+        ),
+        ocrService: any ScreenshotOCRService = VisionScreenshotOCRService()
     ) {
         self.screenshotId = screenshotId
         self.metadataManager = metadataManager
         self.photosManager = photosManager
         self.imageTargetSize = imageTargetSize
+        self.ocrService = ocrService
         areAnnotationsVisible = showAnnotationsByDefault
     }
 
@@ -167,6 +175,14 @@ final class ScreenshotDetailViewModel {
 
     var isShareActionActive: Bool {
         isSharePresented
+    }
+
+    var isOCRTextActionActive: Bool {
+        isOCRTextPresented
+    }
+
+    var canShowOCRText: Bool {
+        image != nil || screenshot?.ocrIndexedAt != nil
     }
 
     func loadImageIfNeeded() async {
@@ -305,6 +321,46 @@ final class ScreenshotDetailViewModel {
     func presentFullscreen() {
         guard canOpenFullscreen else { return }
         isFullscreenPresented = true
+    }
+
+    func presentOCRText() async {
+        guard canShowOCRText else { return }
+        isOCRTextPresented = true
+        didCopyOCRText = false
+        ocrLoadError = nil
+
+        if let indexed = screenshot?.ocrText, screenshot?.ocrIndexedAt != nil {
+            ocrDisplayText = indexed
+            return
+        }
+
+        guard let source = image ?? displayedImage else {
+            ocrDisplayText = nil
+            ocrLoadError = "Photo unavailable"
+            return
+        }
+
+        isLoadingOCRText = true
+        defer { isLoadingOCRText = false }
+
+        do {
+            let text = try await ocrService.recognizeText(in: source)
+            ocrDisplayText = text
+            try? await metadataManager.updateOCRText(screenshotId: screenshotId, text: text)
+            print("[Screenbase OCR] copy-sheet screenshotId=\(screenshotId) (\(text.count) chars)")
+        } catch {
+            ocrDisplayText = nil
+            ocrLoadError = error.localizedDescription
+            print("[Screenbase OCR] copy-sheet failed screenshotId=\(screenshotId) error=\(error)")
+        }
+    }
+
+    func copyAllOCRText() {
+        let text = (ocrDisplayText ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !text.isEmpty else { return }
+        UIPasteboard.general.string = text
+        didCopyOCRText = true
+        HapticsManager.instance.mediumImpact()
     }
 
     /// Removes this screenshot's metadata from Screenbase (does not delete the Photos asset).
