@@ -95,7 +95,18 @@ struct ScreenshotDetailView: View {
                 get: { viewModel.isAnnotationEditorPresented },
                 set: { viewModel.isAnnotationEditorPresented = $0 }
             )) {
-                annotationEditor(viewModel: viewModel)
+                AnnotationNoteSheet(
+                    viewModel: AnnotationNoteSheetViewModel(
+                        screenshotId: screenshotId,
+                        metadataManager: metadataManager,
+                        onFinished: {
+                            viewModel.isAnnotationEditorPresented = false
+                        }
+                    ),
+                    onDismiss: {
+                        viewModel.isAnnotationEditorPresented = false
+                    }
+                )
             }
             .sheet(isPresented: Binding(
                 get: { viewModel.isMembershipSheetPresented },
@@ -330,32 +341,6 @@ struct ScreenshotDetailView: View {
         case nil:
             EmptyView()
         }
-    }
-
-    private func annotationEditor(viewModel: ScreenshotDetailViewModel) -> some View {
-        NavigationStack {
-            TextEditor(text: Binding(
-                get: { viewModel.annotationDraft },
-                set: { viewModel.annotationDraft = $0 }
-            ))
-            .font(ScreenbaseFonts.display(size: 17, weight: .regular))
-            .padding(ScreenbaseMetrics.edgePadding)
-            .navigationTitle("Notes")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") {
-                        viewModel.isAnnotationEditorPresented = false
-                    }
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Save") {
-                        Task { await viewModel.saveAnnotation() }
-                    }
-                }
-            }
-        }
-        .presentationDetents([.medium, .large])
     }
 }
 
