@@ -9,7 +9,9 @@ import Observation
 @MainActor
 @Observable
 final class AnnotationNoteSheetViewModel: Identifiable {
-    var id: String { screenshotId }
+    var id: String {
+        screenshotId
+    }
 
     var draft: String
     var selectedTagIds: Set<String>
@@ -86,6 +88,6 @@ final class AnnotationNoteSheetViewModel: Identifiable {
                 return lhs.name.localizedCaseInsensitiveCompare(rhs.name) == .orderedAscending
             }
             .prefix(limit)
-            .map { $0 }
+            .map(\.self)
     }
 }

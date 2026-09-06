@@ -180,7 +180,8 @@ struct LibraryView: View {
                 HapticsManager.instance.mediumImpact()
                 Task { await viewModel.deleteSelectedScreenshots() }
             }
-            .buttonStyle(.screenbaseSecondary)
+            .buttonStyle(.plain)
+            .screenbaseDangerText(size: 17)
             .frame(maxWidth: 120)
 
             Button("Assign") {
