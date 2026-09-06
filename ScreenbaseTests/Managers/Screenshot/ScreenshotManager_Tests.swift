@@ -56,6 +56,7 @@ struct ScreenshotManager_Tests {
         let sut = ScreenshotManager(service: service, index: index)
         await sut.startDiscovery()
         #expect(index.indexedAssetIdentifiers.count == 1)
+        #expect(sut.pendingCaptureAnnotationIds.isEmpty)
         await waitUntil { sut.isObserving }
 
         let newer = DiscoveredScreenshot(
@@ -71,6 +72,45 @@ struct ScreenshotManager_Tests {
         // Then
         #expect(index.indexedAssetIdentifiers.count == 2)
         #expect(sut.discoveredScreenshots.count == 2)
+        let expectedId = FirestoreDocumentID.fromAssetLocalIdentifier(newer.assetLocalIdentifier)
+        #expect(sut.pendingCaptureAnnotationIds == [expectedId])
+        sut.stopDiscovery()
+    }
+
+    @Test("Initial scan does not enqueue capture annotation prompts")
+    @MainActor
+    func initialScanDoesNotEnqueueCapturePrompts() async {
+        let service = MockScreenshotService(screenshots: DiscoveredScreenshot.mocks)
+        let index = InMemoryScreenshotIndex()
+        let sut = ScreenshotManager(service: service, index: index)
+
+        _ = await sut.runInitialScan()
+
+        #expect(sut.pendingCaptureAnnotationIds.isEmpty)
+        #expect(sut.lastIndexedCount == 3)
+    }
+
+    @Test("Acknowledge removes pending capture annotation id")
+    @MainActor
+    func acknowledgeRemovesPendingCaptureAnnotationId() async throws {
+        let service = MockScreenshotService(screenshots: [DiscoveredScreenshot.mock])
+        let index = InMemoryScreenshotIndex()
+        let sut = ScreenshotManager(service: service, index: index)
+        await sut.startDiscovery()
+        await waitUntil { sut.isObserving }
+
+        let newer = DiscoveredScreenshot(
+            assetLocalIdentifier: "MOCK/ASSET-NEW",
+            creationDate: Date()
+        )
+        service.screenshots = [DiscoveredScreenshot.mock, newer]
+        service.emitLibraryChange()
+        await waitUntil { !sut.pendingCaptureAnnotationIds.isEmpty }
+
+        let id = try #require(sut.pendingCaptureAnnotationIds.first)
+        sut.acknowledgeCaptureAnnotation(id: id)
+
+        #expect(sut.pendingCaptureAnnotationIds.isEmpty)
         sut.stopDiscovery()
     }
 
