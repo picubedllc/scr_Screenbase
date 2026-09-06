@@ -6,14 +6,15 @@
 import SwiftUI
 
 struct AppView: View {
+    @Bindable var appState: AppState
     @Environment(AuthManager.self) private var authManager
     @Environment(UserManager.self) private var userManager
     @Environment(PhotosManager.self) private var photosManager
     @Environment(PurchaseManager.self) private var purchaseManager
     @Environment(MetadataManager.self) private var metadataManager
     @Environment(ScreenshotManager.self) private var screenshotManager
+    @Environment(ShareImportManager.self) private var shareImportManager
 
-    @State private var appState = AppState()
     @AppStorage(SettingsViewModel.Keys.appearance) private var appearance = AppearancePreference.system
 
     var body: some View {
@@ -26,7 +27,6 @@ struct AppView: View {
                 screenshotManager: screenshotManager
             )
         }
-        .environment(appState)
         .preferredColorScheme(appearance.colorScheme)
         .task {
             await purchaseManager.bootstrap()
@@ -34,6 +34,9 @@ struct AppView: View {
         }
         .task(id: appState.showMainApp) {
             await startScreenshotDiscoveryIfAuthorized()
+            if appState.showMainApp {
+                _ = await shareImportManager.importPendingSharedImages()
+            }
         }
     }
 
@@ -67,22 +70,13 @@ struct AppView: View {
 
 #Preview("Screenbase App — Main") {
     let metadata = MetadataManager(local: InMemoryLocalMetadataStore(), remote: MockMetadataService())
-    AppView()
-        .environment(AuthManager(service: AuthServiceMock()))
-        .environment(UserManager(services: MockUserServices()))
-        .environment(PhotosManager(service: MockPhotosService(status: .authorized, screenshotCount: 24)))
-        .environment(PurchaseManager(service: MockPurchaseService()))
-        .environment(metadata)
-        .environment(ScreenshotManager(service: MockScreenshotService(), index: metadata))
-}
-
-#Preview("Screenbase App — Onboarding") {
-    let metadata = MetadataManager(local: InMemoryLocalMetadataStore(), remote: MockMetadataService())
-    AppView()
-        .environment(AuthManager(service: AuthServiceMock(user: nil)))
-        .environment(UserManager(services: MockUserServices(user: nil)))
-        .environment(PhotosManager(service: MockPhotosService()))
-        .environment(PurchaseManager(service: MockPurchaseService()))
-        .environment(metadata)
-        .environment(ScreenshotManager(service: MockScreenshotService(), index: metadata))
+    let deps = AppDependencies.mock
+    AppView(appState: AppState(showMainApp: true))
+        .environment(deps.authManager)
+        .environment(deps.userManager)
+        .environment(deps.photosManager)
+        .environment(deps.purchaseManager)
+        .environment(deps.metadataManager)
+        .environment(deps.screenshotManager)
+        .environment(deps.shareImportManager)
 }

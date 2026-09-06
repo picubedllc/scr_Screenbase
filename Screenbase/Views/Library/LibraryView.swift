@@ -7,6 +7,7 @@ import PhosphorSwift
 import SwiftUI
 
 struct LibraryView: View {
+    @Environment(AppState.self) private var appState
     @Environment(MetadataManager.self) private var metadataManager
     @Environment(ScreenshotManager.self) private var screenshotManager
     @Environment(PhotosManager.self) private var photosManager
@@ -16,6 +17,7 @@ struct LibraryView: View {
     @State private var thumbnailLoader: LibraryThumbnailLoader?
     @State private var navigationPath = NavigationPath()
     @State private var tabBarVisibility: Visibility = .visible
+    @State private var openAnnotationOnAppearId: String?
 
     private let columns = [
         GridItem(.flexible(), spacing: ScreenbaseMetrics.collectionGridSpacing),
@@ -40,8 +42,14 @@ struct LibraryView: View {
             .navigationDestination(for: String.self) { screenshotId in
                 ScreenshotDetailView(
                     screenshotId: screenshotId,
-                    tabBarVisibility: $tabBarVisibility
+                    tabBarVisibility: $tabBarVisibility,
+                    openAnnotationOnAppear: openAnnotationOnAppearId == screenshotId
                 )
+                .onAppear {
+                    if openAnnotationOnAppearId == screenshotId {
+                        openAnnotationOnAppearId = nil
+                    }
+                }
             }
         }
         .onAppear {
@@ -58,12 +66,26 @@ struct LibraryView: View {
                     scale: displayScale
                 )
             }
+            consumePendingDeepLinkNavigation()
         }
         .onChange(of: viewModel?.detailScreenshotId) { _, newValue in
             guard let newValue else { return }
             navigationPath.append(newValue)
             viewModel?.clearDetail()
         }
+        .onChange(of: appState.pendingDetailScreenshotId) { _, _ in
+            consumePendingDeepLinkNavigation()
+        }
+    }
+
+    private func consumePendingDeepLinkNavigation() {
+        guard let id = appState.pendingDetailScreenshotId else { return }
+        if appState.pendingAnnotationScreenshotId == id {
+            openAnnotationOnAppearId = id
+            appState.pendingAnnotationScreenshotId = nil
+        }
+        appState.pendingDetailScreenshotId = nil
+        navigationPath.append(id)
     }
 
     private func libraryContent(

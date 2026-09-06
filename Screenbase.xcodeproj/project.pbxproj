@@ -12,11 +12,19 @@
 		62A100063036EAA100281050 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 62A100033036EAA100281050 /* FirebaseFirestore */; };
 		62A100073036EAA100281050 /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = 62A100043036EAA100281050 /* FirebaseAnalytics */; };
 		62A1000A3036EAA100281050 /* PhosphorSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 62A100093036EAA100281050 /* PhosphorSwift */; };
+		6980809DE5B48329BF76452F /* ScreenbaseShareExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = D290F1AE0435B33BA07A20CD /* ScreenbaseShareExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		AFE14F54583426EDC4CC51EA /* RevenueCatUI in Frameworks */ = {isa = PBXBuildFile; productRef = 348A2F6749D5879ECDBC200D /* RevenueCatUI */; };
 		B66D0068D96E27191A2B885C /* RevenueCat in Frameworks */ = {isa = PBXBuildFile; productRef = 3F72EE19A68C2050ACAE2E9B /* RevenueCat */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		525F2563C818931631B8DC5B /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 6220099E3036E99900281050 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 549EF8AC172CFCCF0604EA8F;
+			remoteInfo = ScreenbaseShareExtension;
+		};
 		622009B63036E99A00281050 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 6220099E3036E99900281050 /* Project object */;
@@ -33,10 +41,25 @@
 		};
 /* End PBXContainerItemProxy section */
 
+/* Begin PBXCopyFilesBuildPhase section */
+		474F249219DA25C43FFB724C /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				6980809DE5B48329BF76452F /* ScreenbaseShareExtension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
 		622009A63036E99900281050 /* Screenbase.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Screenbase.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		622009B53036E99A00281050 /* ScreenbaseTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ScreenbaseTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		622009BF3036E99A00281050 /* ScreenbaseUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ScreenbaseUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		D290F1AE0435B33BA07A20CD /* ScreenbaseShareExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = ScreenbaseShareExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -47,9 +70,24 @@
 			);
 			target = 622009A53036E99900281050 /* Screenbase */;
 		};
+		F9C9AFFED371925A7B3FF442 /* Exceptions for "ScreenbaseShareExtension" folder in "ScreenbaseShareExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 549EF8AC172CFCCF0604EA8F /* ScreenbaseShareExtension */;
+		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		17B9158280E437AD867DE220 /* ScreenbaseShareExtension */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				F9C9AFFED371925A7B3FF442 /* Exceptions for "ScreenbaseShareExtension" folder in "ScreenbaseShareExtension" target */,
+			);
+			path = ScreenbaseShareExtension;
+			sourceTree = "<group>";
+		};
 		622009A83036E99900281050 /* Screenbase */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
@@ -99,6 +137,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		A374A234D42B068D45087549 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -106,6 +151,7 @@
 			isa = PBXGroup;
 			children = (
 				622009A83036E99900281050 /* Screenbase */,
+				17B9158280E437AD867DE220 /* ScreenbaseShareExtension */,
 				622009B83036E99A00281050 /* ScreenbaseTests */,
 				622009C23036E99A00281050 /* ScreenbaseUITests */,
 				622009A73036E99900281050 /* Products */,
@@ -116,6 +162,7 @@
 			isa = PBXGroup;
 			children = (
 				622009A63036E99900281050 /* Screenbase.app */,
+				D290F1AE0435B33BA07A20CD /* ScreenbaseShareExtension.appex */,
 				622009B53036E99A00281050 /* ScreenbaseTests.xctest */,
 				622009BF3036E99A00281050 /* ScreenbaseUITests.xctest */,
 			);
@@ -125,6 +172,28 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		549EF8AC172CFCCF0604EA8F /* ScreenbaseShareExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = ADF02C5E0F0D045A5648BB5D /* Build configuration list for PBXNativeTarget "ScreenbaseShareExtension" */;
+			buildPhases = (
+				B23607C9D9DA10FAAF56833F /* Sources */,
+				A374A234D42B068D45087549 /* Frameworks */,
+				B2C1A4549BBAE033116E4B74 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				17B9158280E437AD867DE220 /* ScreenbaseShareExtension */,
+			);
+			name = ScreenbaseShareExtension;
+			packageProductDependencies = (
+			);
+			productName = ScreenbaseShareExtension;
+			productReference = D290F1AE0435B33BA07A20CD /* ScreenbaseShareExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 		622009A53036E99900281050 /* Screenbase */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 622009C93036E99A00281050 /* Build configuration list for PBXNativeTarget "Screenbase" */;
@@ -132,10 +201,12 @@
 				622009A23036E99900281050 /* Sources */,
 				622009A33036E99900281050 /* Frameworks */,
 				622009A43036E99900281050 /* Resources */,
+				474F249219DA25C43FFB724C /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				525F14CA731262ADC8BFE684 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				622009A83036E99900281050 /* Screenbase */,
@@ -243,6 +314,7 @@
 			projectRoot = "";
 			targets = (
 				622009A53036E99900281050 /* Screenbase */,
+				549EF8AC172CFCCF0604EA8F /* ScreenbaseShareExtension */,
 				622009B43036E99A00281050 /* ScreenbaseTests */,
 				622009BE3036E99A00281050 /* ScreenbaseUITests */,
 			);
@@ -265,6 +337,13 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		622009BD3036E99A00281050 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B2C1A4549BBAE033116E4B74 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -295,9 +374,21 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		B23607C9D9DA10FAAF56833F /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		525F14CA731262ADC8BFE684 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 549EF8AC172CFCCF0604EA8F /* ScreenbaseShareExtension */;
+			targetProxy = 525F2563C818931631B8DC5B /* PBXContainerItemProxy */;
+		};
 		622009B73036E99A00281050 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 622009A53036E99900281050 /* Screenbase */;
@@ -437,6 +528,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = ScreenbaseAppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Screenbase/Screenbase.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = J7D9ZQDSGC;
@@ -481,6 +573,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = ScreenbaseAppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Screenbase/Screenbase.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = J7D9ZQDSGC;
@@ -603,6 +696,66 @@
 			};
 			name = Release;
 		};
+		9820D5CF6583EE5FC906ACE3 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = ScreenbaseShareExtension/ScreenbaseShareExtension.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = J7D9ZQDSGC;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = ScreenbaseShareExtension/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.getscreenbase.Screenbase.ShareExtension;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+		ED65A8E023D8A995DE8089CA /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = ScreenbaseShareExtension/ScreenbaseShareExtension.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = J7D9ZQDSGC;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = ScreenbaseShareExtension/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.getscreenbase.Screenbase.ShareExtension;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -638,6 +791,15 @@
 			buildConfigurations = (
 				622009D03036E99A00281050 /* Debug */,
 				622009D13036E99A00281050 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		ADF02C5E0F0D045A5648BB5D /* Build configuration list for PBXNativeTarget "ScreenbaseShareExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				ED65A8E023D8A995DE8089CA /* Debug */,
+				9820D5CF6583EE5FC906ACE3 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
