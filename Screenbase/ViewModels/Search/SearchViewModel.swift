@@ -29,14 +29,20 @@ final class SearchViewModel {
     /// Free/Pro gate for OCR hits (SCR-24). Default true until PurchaseManager gating ships.
     var includeOCRInSearch: Bool = true
 
+    private var refreshTask: Task<Void, Never>?
+
     var query: String = "" {
-        didSet { refreshResults() }
+        didSet {
+            scheduleRefresh()
+        }
     }
 
     private(set) var recentQueries: [String] = []
     private(set) var results: [ResultItem] = []
     private(set) var contentState: ContentState = .landing
     private(set) var detailScreenshotId: String?
+    /// Last measured query latency (nanoseconds) for diagnostics / SCR-17.
+    private(set) var lastQueryElapsedNanoseconds: UInt64 = 0
 
     init(metadataManager: MetadataManager, recentStore: RecentSearchStore = .shared) {
         self.metadataManager = metadataManager
@@ -46,10 +52,11 @@ final class SearchViewModel {
 
     func setSearching(_ isSearching: Bool) {
         if !isSearching {
+            refreshTask?.cancel()
             contentState = .landing
             return
         }
-        refreshResults()
+        scheduleRefresh(immediate: true)
     }
 
     func selectRecent(_ recent: String) {
@@ -60,7 +67,7 @@ final class SearchViewModel {
     func clearRecent() {
         recentStore.clear()
         recentQueries = []
-        refreshResults()
+        scheduleRefresh(immediate: true)
     }
 
     func commitSearch() {
@@ -68,7 +75,7 @@ final class SearchViewModel {
         guard !trimmed.isEmpty else { return }
         recentStore.add(trimmed)
         recentQueries = recentStore.load()
-        refreshResults()
+        scheduleRefresh(immediate: true)
     }
 
     func openDetail(id: String) {
@@ -80,20 +87,48 @@ final class SearchViewModel {
         detailScreenshotId = nil
     }
 
+    private func scheduleRefresh(immediate: Bool = false) {
+        refreshTask?.cancel()
+        if immediate {
+            refreshResults()
+            return
+        }
+        refreshTask = Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(120))
+            guard !Task.isCancelled else { return }
+            refreshResults()
+        }
+    }
+
     private func refreshResults() {
         let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
         if trimmed.isEmpty {
             results = []
+            lastQueryElapsedNanoseconds = 0
             contentState = .recent
             return
         }
 
-        results = Self.search(
+        let input = RankedSearchEngine.Input(
+            screenshots: metadataManager.screenshots,
+            tags: metadataManager.tags,
+            collections: metadataManager.collections,
+            includeOCR: includeOCRInSearch
+        )
+        let timing = SearchPerformanceProbe.measureQuery(
             query: trimmed,
-            metadata: metadataManager,
-            includeOCR: includeOCRInSearch,
+            input: input,
             engine: searchEngine
         )
+        lastQueryElapsedNanoseconds = timing.elapsedNanoseconds
+        results = searchEngine.search(query: trimmed, in: input).map {
+            ResultItem(
+                id: $0.screenshotId,
+                assetLocalIdentifier: $0.assetLocalIdentifier,
+                matchSources: $0.matchSources,
+                score: $0.score
+            )
+        }
         contentState = results.isEmpty ? .emptyResults : .results
     }
 

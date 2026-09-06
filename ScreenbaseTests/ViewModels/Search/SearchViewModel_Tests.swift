@@ -38,6 +38,7 @@ struct SearchViewModel_Tests {
         )
         sut.setSearching(true)
         sut.query = "zzzz-no-match"
+        try await Task.sleep(for: .milliseconds(150))
 
         #expect(sut.contentState == .emptyResults)
         #expect(sut.results.isEmpty)
@@ -56,6 +57,7 @@ struct SearchViewModel_Tests {
         )
         sut.setSearching(true)
         sut.query = "login"
+        try await Task.sleep(for: .milliseconds(150))
 
         #expect(sut.contentState == .results)
         #expect(sut.results.map(\.id) == [ScreenshotRecord.mock.id])
