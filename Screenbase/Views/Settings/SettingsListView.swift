@@ -81,6 +81,35 @@ struct SettingsListView: View {
             }
             .screenbaseListRow()
 
+            Section(SettingsCopy.QuickPaths.sectionTitle) {
+                NavigationLink {
+                    SettingsDetailView(
+                        title: SettingsCopy.QuickPaths.detailTitle,
+                        message: SettingsCopy.QuickPaths.detailMessage
+                    )
+                } label: {
+                    VStack(spacing: 12) {
+                        HStack(alignment: .top, spacing: 12) {
+                            ActionButtonTipTileView(
+                                title: SettingsCopy.QuickPaths.actionButtonTitle,
+                                subtitle: SettingsCopy.QuickPaths.actionButtonSubtitle
+                            )
+                            ActionButtonTipTileView(
+                                title: SettingsCopy.QuickPaths.backTapTitle,
+                                subtitle: SettingsCopy.QuickPaths.backTapSubtitle,
+                                systemImage: "hand.tap"
+                            )
+                        }
+                        Text("Tap for setup steps")
+                            .font(.system(size: 13, weight: .medium))
+                            .foregroundStyle(ScreenbaseColors.gray)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                    .padding(.vertical, 4)
+                }
+            }
+            .screenbaseListRow()
+
             Section("Search") {
                 Toggle(isOn: $viewModel.includeScreenshotText) {
                     SettingsRowView(icon: .textT, title: "Include Screenshot Text")

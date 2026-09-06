@@ -14,6 +14,26 @@ enum SettingsCopy {
         static let notDetermined = "Not set"
     }
 
+    enum QuickPaths {
+        static let sectionTitle = "Quick Paths"
+        static let actionButtonTitle = "Action Button"
+        static let actionButtonSubtitle =
+            "In iOS Settings → Action Button, pick Shortcuts and choose Open Library or Add Note on Latest Screenshot."
+        static let backTapTitle = "Back Tap"
+        static let backTapSubtitle =
+            "In Accessibility → Touch → Back Tap, assign a Screenbase shortcut for a double-tap on the back of your iPhone."
+        static let detailTitle = "Action Button & Back Tap"
+        static let detailMessage = """
+        Use system Shortcuts to jump into Screenbase without unlocking the full app flow.
+
+        Action Button: Settings → Action Button → Shortcuts → pick Open Library, Open Search, or Add Note on Latest Screenshot.
+
+        Back Tap: Settings → Accessibility → Touch → Back Tap → Double Tap → choose the same Screenbase shortcut.
+
+        These tips never require leaving Apple’s own Settings app to configure.
+        """
+    }
+
     enum ImportExisting {
         static let title = "Import Existing Screenshots"
         static let message = """
