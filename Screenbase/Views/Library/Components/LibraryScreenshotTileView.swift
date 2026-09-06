@@ -13,6 +13,7 @@ struct LibraryScreenshotTileView: View {
     var isSelected: Bool = false
     var image: UIImage?
     var showsPlaceholder: Bool = false
+    var isMissing: Bool = false
     var onTap: () -> Void = {}
     var onLongPress: () -> Void = {}
 
@@ -33,7 +34,7 @@ struct LibraryScreenshotTileView: View {
             .contentShape(RoundedRectangle(cornerRadius: ScreenbaseMetrics.radiusThumbnail, style: .continuous))
             .onTapGesture(perform: onTap)
             .onLongPressGesture(perform: onLongPress)
-            .accessibilityLabel("Screenshot")
+            .accessibilityLabel(isMissing ? "Missing screenshot" : "Screenshot")
             .accessibilityAddTraits(isSelected ? [.isButton, .isSelected] : .isButton)
             .accessibilityAction(named: "Select") {
                 onLongPress()
@@ -46,6 +47,14 @@ struct LibraryScreenshotTileView: View {
             Image(uiImage: image)
                 .resizable()
                 .scaledToFill()
+        } else if isMissing {
+            RoundedRectangle(cornerRadius: ScreenbaseMetrics.radiusThumbnail, style: .continuous)
+                .fill(ScreenbaseColors.lightGray)
+                .overlay {
+                    Ph.imageBroken.regular
+                        .color(ScreenbaseColors.gray)
+                        .frame(width: 28, height: 28)
+                }
         } else {
             RoundedRectangle(cornerRadius: ScreenbaseMetrics.radiusThumbnail, style: .continuous)
                 .fill(ScreenbaseColors.lightGray)

@@ -8,7 +8,12 @@ import SwiftUI
 
 struct MainTabView: View {
     @Environment(AppState.self) private var appState
+    @Environment(MetadataManager.self) private var metadataManager
+    @Environment(ScreenshotManager.self) private var screenshotManager
+
     @State private var searchText = ""
+    @State private var captureAnnotationScreenshotId: String?
+    @State private var captureAnnotationViewModel: AnnotationNoteSheetViewModel?
 
     var body: some View {
         @Bindable var appState = appState
@@ -55,6 +60,65 @@ struct MainTabView: View {
             }
         }
         .tint(ScreenbaseColors.ink)
+        .sheet(
+            isPresented: Binding(
+                get: { captureAnnotationViewModel != nil },
+                set: { presented in
+                    if !presented {
+                        finishCaptureAnnotation(id: captureAnnotationScreenshotId)
+                    }
+                }
+            )
+        ) {
+            if let captureAnnotationViewModel {
+                AnnotationNoteSheet(
+                    viewModel: captureAnnotationViewModel,
+                    onDismiss: {
+                        finishCaptureAnnotation(id: captureAnnotationScreenshotId)
+                    }
+                )
+            }
+        }
+        .onChange(of: screenshotManager.pendingCaptureAnnotationIds) { _, ids in
+            presentNextCaptureAnnotationIfNeeded(ids: ids)
+        }
+        .onAppear {
+            presentNextCaptureAnnotationIfNeeded(ids: screenshotManager.pendingCaptureAnnotationIds)
+        }
+    }
+
+    private func presentNextCaptureAnnotationIfNeeded(ids: [String]) {
+        guard captureAnnotationViewModel == nil, let nextId = ids.first else { return }
+        guard metadataManager.screenshots.contains(where: { $0.id == nextId }) else {
+            screenshotManager.acknowledgeCaptureAnnotation(id: nextId)
+            presentNextCaptureAnnotationIfNeeded(ids: screenshotManager.pendingCaptureAnnotationIds)
+            return
+        }
+
+        captureAnnotationScreenshotId = nextId
+        captureAnnotationViewModel = AnnotationNoteSheetViewModel(
+            screenshotId: nextId,
+            metadataManager: metadataManager,
+            title: "Add a note",
+            allowsSkip: true,
+            onFinished: {
+                finishCaptureAnnotation(id: nextId)
+            }
+        )
+    }
+
+    private func finishCaptureAnnotation(id: String?) {
+        guard let id else {
+            captureAnnotationViewModel = nil
+            captureAnnotationScreenshotId = nil
+            return
+        }
+        guard captureAnnotationScreenshotId == id || captureAnnotationViewModel != nil else { return }
+
+        captureAnnotationViewModel = nil
+        captureAnnotationScreenshotId = nil
+        screenshotManager.acknowledgeCaptureAnnotation(id: id)
+        presentNextCaptureAnnotationIfNeeded(ids: screenshotManager.pendingCaptureAnnotationIds)
     }
 }
 

@@ -106,7 +106,7 @@ struct LibraryView: View {
 
             VStack {
                 Spacer()
-                if viewModel.canPresentAssignSheet {
+                if viewModel.canPresentAssignSheet || viewModel.canDeleteSelection {
                     selectionToolbar(viewModel: viewModel)
                         .padding(.horizontal, ScreenbaseMetrics.edgePadding)
                         .padding(.bottom, ScreenbaseMetrics.edgePadding)
@@ -198,12 +198,20 @@ struct LibraryView: View {
 
             Spacer()
 
+            Button("Remove") {
+                HapticsManager.instance.mediumImpact()
+                Task { await viewModel.deleteSelectedScreenshots() }
+            }
+            .buttonStyle(.plain)
+            .screenbaseDangerText(size: 17)
+            .frame(maxWidth: 120)
+
             Button("Assign") {
                 HapticsManager.instance.mediumImpact()
                 viewModel.presentAssignSheet()
             }
             .buttonStyle(.screenbasePrimary)
-            .frame(maxWidth: 160)
+            .frame(maxWidth: 120)
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
@@ -259,6 +267,7 @@ struct LibraryView: View {
                             isSelecting: viewModel.isSelecting,
                             isSelected: viewModel.isSelected(record.id),
                             image: thumbnailLoader.image(for: record.assetLocalIdentifier),
+                            isMissing: thumbnailLoader.isMissing(assetLocalIdentifier: record.assetLocalIdentifier),
                             onTap: {
                                 viewModel.handleTileTap(screenshotId: record.id)
                             },

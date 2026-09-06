@@ -17,8 +17,11 @@ final class ScreenshotManager {
     private(set) var isScanning = false
     private(set) var isObserving = false
     private(set) var lastError: ScreenshotServiceError?
+    /// Screenshot record IDs waiting for the capture-time annotation prompt (post-initial scan only).
+    private(set) var pendingCaptureAnnotationIds: [String] = []
 
     private var observationTask: Task<Void, Never>?
+    private var shouldPromptForNewCaptures = false
 
     init(service: any ScreenshotService, index: any ScreenshotIndexing) {
         self.service = service
@@ -28,6 +31,7 @@ final class ScreenshotManager {
     /// Backfills every screenshot already on device, then starts the library observer.
     func startDiscovery() async {
         await runInitialScan()
+        shouldPromptForNewCaptures = true
         startObservingLibraryChanges()
     }
 
@@ -40,7 +44,11 @@ final class ScreenshotManager {
     /// Scans all screenshot assets and indexes ones not already known.
     @discardableResult
     func runInitialScan() async -> [DiscoveredScreenshot] {
-        await scanAndIndexNewScreenshots()
+        await scanAndIndexNewScreenshots(promptForCaptures: false)
+    }
+
+    func acknowledgeCaptureAnnotation(id: String) {
+        pendingCaptureAnnotationIds.removeAll { $0 == id }
     }
 
     private func startObservingLibraryChanges() {
@@ -51,14 +59,14 @@ final class ScreenshotManager {
             guard let self else { return }
             for await _ in service.libraryChangeEvents() {
                 guard !Task.isCancelled else { break }
-                _ = await scanAndIndexNewScreenshots()
+                _ = await scanAndIndexNewScreenshots(promptForCaptures: shouldPromptForNewCaptures)
             }
             isObserving = false
         }
     }
 
     @discardableResult
-    private func scanAndIndexNewScreenshots() async -> [DiscoveredScreenshot] {
+    private func scanAndIndexNewScreenshots(promptForCaptures: Bool) async -> [DiscoveredScreenshot] {
         isScanning = true
         defer { isScanning = false }
 
@@ -76,6 +84,16 @@ final class ScreenshotManager {
 
             try await index.indexNewScreenshots(newcomers)
             lastIndexedCount = newcomers.count
+
+            if promptForCaptures {
+                let ids = newcomers.map {
+                    FirestoreDocumentID.fromAssetLocalIdentifier($0.assetLocalIdentifier)
+                }
+                for id in ids where !pendingCaptureAnnotationIds.contains(id) {
+                    pendingCaptureAnnotationIds.append(id)
+                }
+            }
+
             return newcomers
         } catch let error as ScreenshotServiceError {
             lastError = error

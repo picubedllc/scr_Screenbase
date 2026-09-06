@@ -38,10 +38,9 @@ struct ScreenshotDetailViewModel_Tests {
         #expect(sut.screenshot?.annotationText == "Login flow")
     }
 
-    @Test("Saving annotation updates metadata")
+    @Test("Remove from library deletes metadata entry")
     @MainActor
-    func savingAnnotationUpdatesMetadata() async throws {
-        // Given
+    func removeFromLibraryDeletesMetadata() async throws {
         let metadata = MetadataManager(local: InMemoryLocalMetadataStore(), remote: MockMetadataService())
         try await metadata.upsertScreenshot(.mock)
         let sut = ScreenshotDetailViewModel(
@@ -50,15 +49,26 @@ struct ScreenshotDetailViewModel_Tests {
             photosManager: PhotosManager(service: MockPhotosService(status: .authorized)),
             imageTargetSize: CGSize(width: 100, height: 100)
         )
+
+        await sut.removeFromLibrary()
+
+        #expect(metadata.screenshots.isEmpty)
+    }
+
+    @Test("Presenting annotation editor opens notes sheet")
+    @MainActor
+    func presentingAnnotationEditorOpensSheet() {
+        let metadata = MetadataManager(local: InMemoryLocalMetadataStore(), remote: MockMetadataService())
+        let sut = ScreenshotDetailViewModel(
+            screenshotId: ScreenshotRecord.mock.id,
+            metadataManager: metadata,
+            photosManager: PhotosManager(service: MockPhotosService(status: .authorized)),
+            imageTargetSize: CGSize(width: 100, height: 100)
+        )
+
         sut.presentAnnotationEditor()
-        sut.annotationDraft = "Updated note"
 
-        // When
-        await sut.saveAnnotation()
-
-        // Then
-        #expect(metadata.screenshots.first?.annotationText == "Updated note")
-        #expect(sut.isAnnotationEditorPresented == false)
+        #expect(sut.isAnnotationEditorPresented)
     }
 
     @Test("Applying collections membership replaces collection set")

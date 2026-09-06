@@ -11,12 +11,14 @@ struct ScreenshotDetailView: View {
     @Environment(MetadataManager.self) private var metadataManager
     @Environment(PhotosManager.self) private var photosManager
     @Environment(\.displayScale) private var displayScale
+    @Environment(\.dismiss) private var dismiss
 
     let screenshotId: String
     @Binding var tabBarVisibility: Visibility
     var openAnnotationOnAppear: Bool = false
 
     @State private var viewModel: ScreenshotDetailViewModel?
+    @State private var isRemoveConfirmPresented = false
 
     init(
         screenshotId: String,
@@ -100,11 +102,33 @@ struct ScreenshotDetailView: View {
                 actionBar(viewModel: viewModel)
             }
             .ignoresSafeArea(edges: .top)
+            .alert("Remove from Library?", isPresented: $isRemoveConfirmPresented) {
+                Button("Remove", role: .destructive) {
+                    Task {
+                        await viewModel.removeFromLibrary()
+                        dismiss()
+                    }
+                }
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                Text("Removes Screenbase metadata only. Nothing in Photos is deleted.")
+            }
             .sheet(isPresented: Binding(
                 get: { viewModel.isAnnotationEditorPresented },
                 set: { viewModel.isAnnotationEditorPresented = $0 }
             )) {
-                annotationEditor(viewModel: viewModel)
+                AnnotationNoteSheet(
+                    viewModel: AnnotationNoteSheetViewModel(
+                        screenshotId: screenshotId,
+                        metadataManager: metadataManager,
+                        onFinished: {
+                            viewModel.isAnnotationEditorPresented = false
+                        }
+                    ),
+                    onDismiss: {
+                        viewModel.isAnnotationEditorPresented = false
+                    }
+                )
             }
             .sheet(isPresented: Binding(
                 get: { viewModel.isMembershipSheetPresented },
@@ -161,7 +185,7 @@ struct ScreenshotDetailView: View {
                     ProgressView()
                 }
             case .missing:
-                missingAssetPlaceholder
+                missingAssetPlaceholder()
             case .loaded:
                 if let image = viewModel.displayedImage ?? viewModel.image {
                     Color.black
@@ -179,15 +203,15 @@ struct ScreenshotDetailView: View {
                         .accessibilityLabel("Screenshot")
                         .accessibilityHint("Shows full screen")
                 } else {
-                    missingAssetPlaceholder
+                    missingAssetPlaceholder()
                 }
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
-    private var missingAssetPlaceholder: some View {
-        VStack(spacing: 12) {
+    private func missingAssetPlaceholder() -> some View {
+        VStack(spacing: 16) {
             Ph.imageBroken.regular
                 .color(ScreenbaseColors.gray)
                 .frame(width: 40, height: 40)
@@ -199,6 +223,13 @@ struct ScreenshotDetailView: View {
                 .foregroundStyle(ScreenbaseColors.gray)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 24)
+
+            Button("Remove from Library") {
+                isRemoveConfirmPresented = true
+            }
+            .buttonStyle(.plain)
+            .screenbaseDangerText()
+            .padding(.horizontal, 40)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(ScreenbaseColors.lightGray)
@@ -339,32 +370,6 @@ struct ScreenshotDetailView: View {
         case nil:
             EmptyView()
         }
-    }
-
-    private func annotationEditor(viewModel: ScreenshotDetailViewModel) -> some View {
-        NavigationStack {
-            TextEditor(text: Binding(
-                get: { viewModel.annotationDraft },
-                set: { viewModel.annotationDraft = $0 }
-            ))
-            .font(ScreenbaseFonts.display(size: 17, weight: .regular))
-            .padding(ScreenbaseMetrics.edgePadding)
-            .navigationTitle("Notes")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") {
-                        viewModel.isAnnotationEditorPresented = false
-                    }
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Save") {
-                        Task { await viewModel.saveAnnotation() }
-                    }
-                }
-            }
-        }
-        .presentationDetents([.medium, .large])
     }
 }
 
