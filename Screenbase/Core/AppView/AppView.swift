@@ -12,6 +12,7 @@ struct AppView: View {
     @Environment(PurchaseManager.self) private var purchaseManager
     @Environment(MetadataManager.self) private var metadataManager
     @Environment(ScreenshotManager.self) private var screenshotManager
+    @Environment(OCRManager.self) private var ocrManager
 
     @State private var appState = AppState()
     @AppStorage(SettingsViewModel.Keys.appearance) private var appearance = AppearancePreference.system
@@ -35,12 +36,17 @@ struct AppView: View {
         .task(id: appState.showMainApp) {
             await startScreenshotDiscoveryIfAuthorized()
         }
+        .onChange(of: screenshotManager.lastIndexedCount) { _, count in
+            guard count > 0 else { return }
+            ocrManager.enqueueUnindexedScreenshots()
+        }
     }
 
     private func startScreenshotDiscoveryIfAuthorized() async {
         let status = photosManager.authorizationStatus
         guard status == .authorized || status == .limited else { return }
         await screenshotManager.startDiscovery()
+        ocrManager.enqueueUnindexedScreenshots()
     }
 
     private func checkUserStatus() async {
@@ -67,22 +73,34 @@ struct AppView: View {
 
 #Preview("Screenbase App — Main") {
     let metadata = MetadataManager(local: InMemoryLocalMetadataStore(), remote: MockMetadataService())
+    let photos = PhotosManager(service: MockPhotosService(status: .authorized, screenshotCount: 24))
     AppView()
         .environment(AuthManager(service: AuthServiceMock()))
         .environment(UserManager(services: MockUserServices()))
-        .environment(PhotosManager(service: MockPhotosService(status: .authorized, screenshotCount: 24)))
+        .environment(photos)
         .environment(PurchaseManager(service: MockPurchaseService()))
         .environment(metadata)
         .environment(ScreenshotManager(service: MockScreenshotService(), index: metadata))
+        .environment(OCRManager(
+            service: MockScreenshotOCRService(),
+            metadataManager: metadata,
+            photosManager: photos
+        ))
 }
 
 #Preview("Screenbase App — Onboarding") {
     let metadata = MetadataManager(local: InMemoryLocalMetadataStore(), remote: MockMetadataService())
+    let photos = PhotosManager(service: MockPhotosService())
     AppView()
         .environment(AuthManager(service: AuthServiceMock(user: nil)))
         .environment(UserManager(services: MockUserServices(user: nil)))
-        .environment(PhotosManager(service: MockPhotosService()))
+        .environment(photos)
         .environment(PurchaseManager(service: MockPurchaseService()))
         .environment(metadata)
         .environment(ScreenshotManager(service: MockScreenshotService(), index: metadata))
+        .environment(OCRManager(
+            service: MockScreenshotOCRService(),
+            metadataManager: metadata,
+            photosManager: photos
+        ))
 }

@@ -18,6 +18,7 @@ struct ScreenbaseApp: App {
                 .environment(delegate.dependencies.purchaseManager)
                 .environment(delegate.dependencies.metadataManager)
                 .environment(delegate.dependencies.screenshotManager)
+                .environment(delegate.dependencies.ocrManager)
         }
     }
 }
