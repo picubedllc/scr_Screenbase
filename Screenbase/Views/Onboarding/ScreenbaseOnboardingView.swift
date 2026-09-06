@@ -5,6 +5,7 @@
 
 import PhosphorSwift
 import SwiftUI
+import UIKit
 
 struct ScreenbaseOnboardingView: View {
     @Bindable var appState: AppState
@@ -66,6 +67,13 @@ struct ScreenbaseOnboardingView: View {
                         }
                         .buttonStyle(.screenbaseTertiary)
                     }
+
+                    if viewModel.showsOpenSettings {
+                        Button(OnboardingCopy.InitialScan.openSettingsCTA) {
+                            viewModel.openSystemSettings()
+                        }
+                        .buttonStyle(.screenbaseTertiary)
+                    }
                 }
                 .padding(.horizontal, ScreenbaseMetrics.edgePadding)
                 .padding(.top, 12)
@@ -74,6 +82,20 @@ struct ScreenbaseOnboardingView: View {
         }
         .task(id: viewModel.step) {
             await viewModel.startInitialScanIfNeeded()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
+            handleReturnFromSettings()
+        }
+    }
+
+    private func handleReturnFromSettings() {
+        guard viewModel.step == .initialScan else { return }
+        let previous = viewModel.photosStatus
+        viewModel.refreshPhotosStatus()
+        if previous != viewModel.photosStatus {
+            Task {
+                await viewModel.startInitialScanIfNeeded()
+            }
         }
     }
 
@@ -192,6 +214,9 @@ struct ScreenbaseOnboardingView: View {
         if viewModel.photosStatus == .denied {
             Ph.warningCircle.bold
                 .color(ScreenbaseColors.ink)
+        } else if viewModel.photosStatus == .limited {
+            Ph.warningCircle.bold
+                .color(ScreenbaseColors.ink)
         } else if viewModel.isScanning {
             Ph.magnifyingGlass.bold
                 .color(ScreenbaseColors.ink)
@@ -202,20 +227,28 @@ struct ScreenbaseOnboardingView: View {
     }
 
     private var scanTitle: String {
-        if viewModel.photosStatus == .denied {
+        switch viewModel.photosStatus {
+        case .denied:
             OnboardingCopy.InitialScan.deniedTitle
-        } else {
+        case .limited:
+            OnboardingCopy.InitialScan.limitedTitle
+        case .authorized, .notDetermined:
             OnboardingCopy.InitialScan.title
         }
     }
 
     private var scanSubtitle: String {
-        if viewModel.photosStatus == .denied {
+        switch viewModel.photosStatus {
+        case .denied:
             OnboardingCopy.InitialScan.deniedSubtitle
-        } else if viewModel.isScanning {
-            OnboardingCopy.InitialScan.scanningSubtitle
-        } else {
-            OnboardingCopy.InitialScan.completeSubtitle
+        case .limited:
+            OnboardingCopy.InitialScan.limitedSubtitle
+        case .authorized, .notDetermined:
+            if viewModel.isScanning {
+                OnboardingCopy.InitialScan.scanningSubtitle
+            } else {
+                OnboardingCopy.InitialScan.completeSubtitle
+            }
         }
     }
 

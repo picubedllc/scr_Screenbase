@@ -36,7 +36,10 @@ enum OnboardingCopy {
         static let completeSubtitle = "These stay in Photos. Screenbase will organize references as you go."
         static let deniedTitle = "Photos access is off"
         static let deniedSubtitle =
-            "You can still use Screenbase, but your library will stay empty until Photos access is granted."
+            "You can still use Screenbase, but your library will stay empty until Photos access is granted in Settings."
+        static let limitedTitle = "Limited Photos access"
+        static let limitedSubtitle =
+            "Screenbase can only see screenshots you selected. Open Settings to grant full library access."
         static let continueCTA = "Get started"
         static let openSettingsCTA = "Open Settings"
     }

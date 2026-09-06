@@ -31,5 +31,6 @@ struct SettingsView: View {
     let purchaseManager = PurchaseManager(service: MockPurchaseService())
     return SettingsView()
         .environment(AppState(showMainApp: true))
+        .environment(PhotosManager(service: MockPhotosService(status: .authorized)))
         .environment(purchaseManager)
 }
