@@ -78,6 +78,19 @@ final class MetadataManager {
         }
     }
 
+    /// Persists on-device OCR text and marks the screenshot as indexed.
+    func updateOCRText(screenshotId: String, text: String, indexedAt: Date = Date()) async throws {
+        guard let index = screenshots.firstIndex(where: { $0.id == screenshotId }) else { return }
+        screenshots[index].ocrText = text
+        screenshots[index].ocrIndexedAt = indexedAt
+        screenshots[index].updatedAt = indexedAt
+        let updated = screenshots[index]
+        try persistLocal()
+        await syncRemote { [remote] in
+            try await remote.syncScreenshot(updated, userId: $0)
+        }
+    }
+
     func loadDrawingData(screenshotId: String) -> Data? {
         drawingStore.loadDrawing(screenshotId: screenshotId)
     }
@@ -349,6 +362,14 @@ final class MetadataManager {
         guard !trimmed.isEmpty else { return screenshots }
         return screenshots.filter {
             ($0.annotationText ?? "").localizedCaseInsensitiveContains(trimmed)
+        }
+    }
+
+    func screenshotsMatchingOCR(query: String) -> [ScreenshotRecord] {
+        let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return [] }
+        return screenshots.filter {
+            ($0.ocrText ?? "").localizedCaseInsensitiveContains(trimmed)
         }
     }
 

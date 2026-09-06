@@ -11,6 +11,10 @@ struct ScreenshotRecord: Codable, Equatable, Identifiable, Sendable, Hashable {
     var assetLocalIdentifier: String
     var captureDate: Date?
     var annotationText: String?
+    /// On-device Vision OCR text indexed for search (SCR-14). Empty string means indexed with no text.
+    var ocrText: String?
+    /// Set when OCR indexing completed (success or empty). Nil means still pending / retryable.
+    var ocrIndexedAt: Date?
     var hasVisualAnnotation: Bool
     var visualAnnotationURL: String?
     var collectionIds: [String]
@@ -23,6 +27,8 @@ struct ScreenshotRecord: Codable, Equatable, Identifiable, Sendable, Hashable {
         assetLocalIdentifier: String,
         captureDate: Date? = nil,
         annotationText: String? = nil,
+        ocrText: String? = nil,
+        ocrIndexedAt: Date? = nil,
         hasVisualAnnotation: Bool = false,
         visualAnnotationURL: String? = nil,
         collectionIds: [String] = [],
@@ -34,6 +40,8 @@ struct ScreenshotRecord: Codable, Equatable, Identifiable, Sendable, Hashable {
         self.assetLocalIdentifier = assetLocalIdentifier
         self.captureDate = captureDate
         self.annotationText = annotationText
+        self.ocrText = ocrText
+        self.ocrIndexedAt = ocrIndexedAt
         self.hasVisualAnnotation = hasVisualAnnotation
         self.visualAnnotationURL = visualAnnotationURL
         self.collectionIds = collectionIds
@@ -57,6 +65,8 @@ struct ScreenshotRecord: Codable, Equatable, Identifiable, Sendable, Hashable {
         case assetLocalIdentifier = "asset_local_identifier"
         case captureDate = "capture_date"
         case annotationText = "annotation_text"
+        case ocrText = "ocr_text"
+        case ocrIndexedAt = "ocr_indexed_at"
         case hasVisualAnnotation = "has_visual_annotation"
         case visualAnnotationURL = "visual_annotation_url"
         case collectionIds = "collection_ids"
@@ -71,6 +81,8 @@ struct ScreenshotRecord: Codable, Equatable, Identifiable, Sendable, Hashable {
         assetLocalIdentifier = try container.decode(String.self, forKey: .assetLocalIdentifier)
         captureDate = try container.decodeIfPresent(Date.self, forKey: .captureDate)
         annotationText = try container.decodeIfPresent(String.self, forKey: .annotationText)
+        ocrText = try container.decodeIfPresent(String.self, forKey: .ocrText)
+        ocrIndexedAt = try container.decodeIfPresent(Date.self, forKey: .ocrIndexedAt)
         hasVisualAnnotation = try container.decodeIfPresent(Bool.self, forKey: .hasVisualAnnotation) ?? false
         visualAnnotationURL = try container.decodeIfPresent(String.self, forKey: .visualAnnotationURL)
         collectionIds = try container.decodeIfPresent([String].self, forKey: .collectionIds) ?? []

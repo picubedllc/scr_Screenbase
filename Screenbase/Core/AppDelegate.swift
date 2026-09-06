@@ -49,6 +49,7 @@ struct AppDependencies {
     let purchaseManager: PurchaseManager
     let metadataManager: MetadataManager
     let screenshotManager: ScreenshotManager
+    let ocrManager: OCRManager
 
     init(
         authManager: AuthManager,
@@ -56,7 +57,8 @@ struct AppDependencies {
         photosManager: PhotosManager,
         purchaseManager: PurchaseManager,
         metadataManager: MetadataManager,
-        screenshotManager: ScreenshotManager
+        screenshotManager: ScreenshotManager,
+        ocrManager: OCRManager
     ) {
         self.authManager = authManager
         self.userManager = userManager
@@ -64,6 +66,7 @@ struct AppDependencies {
         self.purchaseManager = purchaseManager
         self.metadataManager = metadataManager
         self.screenshotManager = screenshotManager
+        self.ocrManager = ocrManager
     }
 
     init(configuration: BuildConfiguration) {
@@ -75,15 +78,21 @@ struct AppDependencies {
                 drawingStore: FileAnnotationDrawingStore(),
                 imageUpload: FirebaseImageUploadService()
             )
+            let photosManager = PhotosManager(service: PhotosServiceLive())
             self.init(
                 authManager: AuthManager(service: FirebaseAuthServiceLive()),
                 userManager: UserManager(services: ProductionUserServices()),
-                photosManager: PhotosManager(service: PhotosServiceLive()),
+                photosManager: photosManager,
                 purchaseManager: PurchaseManager(service: RevenueCatPurchaseService()),
                 metadataManager: metadataManager,
                 screenshotManager: ScreenshotManager(
                     service: PhotosScreenshotService(),
                     index: metadataManager
+                ),
+                ocrManager: OCRManager(
+                    service: VisionScreenshotOCRService(),
+                    metadataManager: metadataManager,
+                    photosManager: photosManager
                 )
             )
         }
@@ -96,15 +105,21 @@ struct AppDependencies {
             drawingStore: InMemoryAnnotationDrawingStore(),
             imageUpload: MockImageUploadService()
         )
+        let photosManager = PhotosManager(service: MockPhotosService())
         return AppDependencies(
             authManager: AuthManager(service: AuthServiceMock()),
             userManager: UserManager(services: MockUserServices()),
-            photosManager: PhotosManager(service: MockPhotosService()),
+            photosManager: photosManager,
             purchaseManager: PurchaseManager(service: MockPurchaseService()),
             metadataManager: metadataManager,
             screenshotManager: ScreenshotManager(
                 service: MockScreenshotService(),
                 index: metadataManager
+            ),
+            ocrManager: OCRManager(
+                service: MockScreenshotOCRService(),
+                metadataManager: metadataManager,
+                photosManager: photosManager
             )
         )
     }
