@@ -49,6 +49,7 @@ struct AppDependencies {
     let purchaseManager: PurchaseManager
     let metadataManager: MetadataManager
     let screenshotManager: ScreenshotManager
+    let shareImportManager: ShareImportManager
 
     init(
         authManager: AuthManager,
@@ -56,7 +57,8 @@ struct AppDependencies {
         photosManager: PhotosManager,
         purchaseManager: PurchaseManager,
         metadataManager: MetadataManager,
-        screenshotManager: ScreenshotManager
+        screenshotManager: ScreenshotManager,
+        shareImportManager: ShareImportManager
     ) {
         self.authManager = authManager
         self.userManager = userManager
@@ -64,47 +66,71 @@ struct AppDependencies {
         self.purchaseManager = purchaseManager
         self.metadataManager = metadataManager
         self.screenshotManager = screenshotManager
+        self.shareImportManager = shareImportManager
     }
 
     init(configuration: BuildConfiguration) {
         switch configuration {
         case .dev, .prod:
+            let sharedImages: any SharedImageStore
+            if let fileStore = try? FileSharedImageStore() {
+                sharedImages = fileStore
+            } else {
+                sharedImages = InMemorySharedImageStore()
+            }
             let metadataManager = MetadataManager(
                 local: FileLocalMetadataStore(),
                 remote: FirestoreMetadataService(),
                 drawingStore: FileAnnotationDrawingStore(),
-                imageUpload: FirebaseImageUploadService()
+                imageUpload: FirebaseImageUploadService(),
+                sharedImageStore: sharedImages
             )
             self.init(
                 authManager: AuthManager(service: FirebaseAuthServiceLive()),
                 userManager: UserManager(services: ProductionUserServices()),
-                photosManager: PhotosManager(service: PhotosServiceLive()),
+                photosManager: PhotosManager(
+                    service: PhotosServiceLive(),
+                    sharedImageStore: sharedImages
+                ),
                 purchaseManager: PurchaseManager(service: RevenueCatPurchaseService()),
                 metadataManager: metadataManager,
                 screenshotManager: ScreenshotManager(
                     service: PhotosScreenshotService(),
                     index: metadataManager
+                ),
+                shareImportManager: ShareImportManager(
+                    sharedImageStore: sharedImages,
+                    metadataManager: metadataManager
                 )
             )
         }
     }
 
     static var mock: AppDependencies {
+        let sharedImages = InMemorySharedImageStore()
         let metadataManager = MetadataManager(
             local: InMemoryLocalMetadataStore(),
             remote: MockMetadataService(),
             drawingStore: InMemoryAnnotationDrawingStore(),
-            imageUpload: MockImageUploadService()
+            imageUpload: MockImageUploadService(),
+            sharedImageStore: sharedImages
         )
         return AppDependencies(
             authManager: AuthManager(service: AuthServiceMock()),
             userManager: UserManager(services: MockUserServices()),
-            photosManager: PhotosManager(service: MockPhotosService()),
+            photosManager: PhotosManager(
+                service: MockPhotosService(),
+                sharedImageStore: sharedImages
+            ),
             purchaseManager: PurchaseManager(service: MockPurchaseService()),
             metadataManager: metadataManager,
             screenshotManager: ScreenshotManager(
                 service: MockScreenshotService(),
                 index: metadataManager
+            ),
+            shareImportManager: ShareImportManager(
+                sharedImageStore: sharedImages,
+                metadataManager: metadataManager
             )
         )
     }

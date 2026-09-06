@@ -7,61 +7,55 @@ import PhosphorSwift
 import SwiftUI
 
 struct MainTabView: View {
+    @Environment(AppState.self) private var appState
     @Environment(MetadataManager.self) private var metadataManager
     @Environment(ScreenshotManager.self) private var screenshotManager
 
-    @State private var selectedTab: Destination = .library
     @State private var searchText = ""
     @State private var captureAnnotationScreenshotId: String?
     @State private var captureAnnotationViewModel: AnnotationNoteSheetViewModel?
 
-    enum Destination: Hashable {
-        case library
-        case search
-        case collections
-        case settings
-    }
-
     var body: some View {
-        TabView(selection: $selectedTab) {
-            Tab(value: .library) {
+        @Bindable var appState = appState
+        TabView(selection: $appState.selectedTab) {
+            Tab(value: AppState.MainTab.library) {
                 LibraryView()
             } label: {
                 Label {
                     Text("Library")
                 } icon: {
-                    Ph.squaresFour.tabBarImage(isSelected: selectedTab == .library)
+                    Ph.squaresFour.tabBarImage(isSelected: appState.selectedTab == .library)
                 }
             }
 
-            Tab(value: .collections) {
+            Tab(value: AppState.MainTab.collections) {
                 CollectionsView()
             } label: {
                 Label {
                     Text("Collections")
                 } icon: {
-                    Ph.folderSimple.tabBarImage(isSelected: selectedTab == .collections)
+                    Ph.folderSimple.tabBarImage(isSelected: appState.selectedTab == .collections)
                 }
             }
 
-            Tab(value: .settings) {
+            Tab(value: AppState.MainTab.settings) {
                 SettingsView()
             } label: {
                 Label {
                     Text("Settings")
                 } icon: {
-                    Ph.gearSix.tabBarImage(isSelected: selectedTab == .settings)
+                    Ph.gearSix.tabBarImage(isSelected: appState.selectedTab == .settings)
                 }
             }
 
-            Tab(value: .search, role: .search) {
+            Tab(value: AppState.MainTab.search, role: .search) {
                 SearchView(query: searchText)
                     .searchable(text: $searchText, prompt: "Screenbase")
             } label: {
                 Label {
                     Text("Search")
                 } icon: {
-                    Ph.magnifyingGlass.tabBarImage(isSelected: selectedTab == .search)
+                    Ph.magnifyingGlass.tabBarImage(isSelected: appState.selectedTab == .search)
                 }
             }
         }
@@ -129,13 +123,14 @@ struct MainTabView: View {
 }
 
 #Preview {
-    let metadata = MetadataManager(local: InMemoryLocalMetadataStore(), remote: MockMetadataService())
+    let deps = AppDependencies.mock
     MainTabView()
         .environment(AppState(showMainApp: true))
-        .environment(AuthManager(service: AuthServiceMock()))
-        .environment(UserManager(services: MockUserServices()))
-        .environment(PhotosManager(service: MockPhotosService(status: .authorized, screenshotCount: 24)))
-        .environment(PurchaseManager(service: MockPurchaseService()))
-        .environment(metadata)
-        .environment(ScreenshotManager(service: MockScreenshotService(), index: metadata))
+        .environment(deps.authManager)
+        .environment(deps.userManager)
+        .environment(deps.photosManager)
+        .environment(deps.purchaseManager)
+        .environment(deps.metadataManager)
+        .environment(deps.screenshotManager)
+        .environment(deps.shareImportManager)
 }

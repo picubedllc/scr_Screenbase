@@ -12,11 +12,13 @@ import UIKit
 @Observable
 final class PhotosManager {
     private let service: any PhotosService
+    private let sharedImageStore: (any SharedImageStore)?
 
     private(set) var authorizationStatus: PhotosAuthorizationStatus
 
-    init(service: any PhotosService) {
+    init(service: any PhotosService, sharedImageStore: (any SharedImageStore)? = nil) {
         self.service = service
+        self.sharedImageStore = sharedImageStore
         authorizationStatus = service.authorizationStatus
     }
 
@@ -34,10 +36,16 @@ final class PhotosManager {
     }
 
     func thumbnailImage(forAssetLocalIdentifier localIdentifier: String, targetSize: CGSize) async -> UIImage? {
-        await service.thumbnailImage(forAssetLocalIdentifier: localIdentifier, targetSize: targetSize)
+        if SharedAssetID.isShared(localIdentifier) {
+            return sharedImageStore?.loadImage(assetLocalIdentifier: localIdentifier)
+        }
+        return await service.thumbnailImage(forAssetLocalIdentifier: localIdentifier, targetSize: targetSize)
     }
 
     func fullImage(forAssetLocalIdentifier localIdentifier: String, targetSize: CGSize) async -> UIImage? {
-        await service.fullImage(forAssetLocalIdentifier: localIdentifier, targetSize: targetSize)
+        if SharedAssetID.isShared(localIdentifier) {
+            return sharedImageStore?.loadImage(assetLocalIdentifier: localIdentifier)
+        }
+        return await service.fullImage(forAssetLocalIdentifier: localIdentifier, targetSize: targetSize)
     }
 }

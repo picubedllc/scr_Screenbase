@@ -14,6 +14,7 @@ final class MetadataManager {
     private let remote: any MetadataService
     private let drawingStore: any AnnotationDrawingStore
     private let imageUpload: any ImageUploadService
+    private let sharedImageStore: (any SharedImageStore)?
 
     private(set) var screenshots: [ScreenshotRecord] = []
     private(set) var collections: [CollectionRecord] = []
@@ -27,12 +28,14 @@ final class MetadataManager {
         local: any LocalMetadataStore,
         remote: any MetadataService,
         drawingStore: any AnnotationDrawingStore,
-        imageUpload: any ImageUploadService
+        imageUpload: any ImageUploadService,
+        sharedImageStore: (any SharedImageStore)? = nil
     ) {
         self.local = local
         self.remote = remote
         self.drawingStore = drawingStore
         self.imageUpload = imageUpload
+        self.sharedImageStore = sharedImageStore
         apply(local.load())
     }
 
@@ -42,7 +45,8 @@ final class MetadataManager {
             local: local,
             remote: remote,
             drawingStore: InMemoryAnnotationDrawingStore(),
-            imageUpload: MockImageUploadService()
+            imageUpload: MockImageUploadService(),
+            sharedImageStore: InMemorySharedImageStore()
         )
     }
 
@@ -120,8 +124,12 @@ final class MetadataManager {
     }
 
     func deleteScreenshot(id: String) async throws {
+        let assetId = screenshots.first(where: { $0.id == id })?.assetLocalIdentifier
         screenshots.removeAll { $0.id == id }
         try? drawingStore.deleteDrawing(screenshotId: id)
+        if let assetId, SharedAssetID.isShared(assetId) {
+            try? sharedImageStore?.deleteImage(assetLocalIdentifier: assetId)
+        }
         try persistLocal()
         await syncRemote { [remote] in
             try await remote.deleteScreenshot(id: id, userId: $0)

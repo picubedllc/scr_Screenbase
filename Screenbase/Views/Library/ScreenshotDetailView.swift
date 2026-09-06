@@ -15,13 +15,19 @@ struct ScreenshotDetailView: View {
 
     let screenshotId: String
     @Binding var tabBarVisibility: Visibility
+    var openAnnotationOnAppear: Bool = false
 
     @State private var viewModel: ScreenshotDetailViewModel?
     @State private var isRemoveConfirmPresented = false
 
-    init(screenshotId: String, tabBarVisibility: Binding<Visibility> = .constant(.hidden)) {
+    init(
+        screenshotId: String,
+        tabBarVisibility: Binding<Visibility> = .constant(.hidden),
+        openAnnotationOnAppear: Bool = false
+    ) {
         self.screenshotId = screenshotId
         _tabBarVisibility = tabBarVisibility
+        self.openAnnotationOnAppear = openAnnotationOnAppear
     }
 
     var body: some View {
@@ -68,6 +74,9 @@ struct ScreenshotDetailView: View {
                         height: screen.height * displayScale
                     )
                 )
+            }
+            if openAnnotationOnAppear {
+                viewModel?.presentAnnotationEditor()
             }
         }
         .onDisappear {
