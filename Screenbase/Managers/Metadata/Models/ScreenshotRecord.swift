@@ -11,6 +11,8 @@ struct ScreenshotRecord: Codable, Equatable, Identifiable, Sendable, Hashable {
     var assetLocalIdentifier: String
     var captureDate: Date?
     var annotationText: String?
+    var hasVisualAnnotation: Bool
+    var visualAnnotationURL: String?
     var collectionIds: [String]
     var tagIds: [String]
     var createdAt: Date
@@ -21,6 +23,8 @@ struct ScreenshotRecord: Codable, Equatable, Identifiable, Sendable, Hashable {
         assetLocalIdentifier: String,
         captureDate: Date? = nil,
         annotationText: String? = nil,
+        hasVisualAnnotation: Bool = false,
+        visualAnnotationURL: String? = nil,
         collectionIds: [String] = [],
         tagIds: [String] = [],
         createdAt: Date = Date(),
@@ -30,6 +34,8 @@ struct ScreenshotRecord: Codable, Equatable, Identifiable, Sendable, Hashable {
         self.assetLocalIdentifier = assetLocalIdentifier
         self.captureDate = captureDate
         self.annotationText = annotationText
+        self.hasVisualAnnotation = hasVisualAnnotation
+        self.visualAnnotationURL = visualAnnotationURL
         self.collectionIds = collectionIds
         self.tagIds = tagIds
         self.createdAt = createdAt
@@ -51,10 +57,26 @@ struct ScreenshotRecord: Codable, Equatable, Identifiable, Sendable, Hashable {
         case assetLocalIdentifier = "asset_local_identifier"
         case captureDate = "capture_date"
         case annotationText = "annotation_text"
+        case hasVisualAnnotation = "has_visual_annotation"
+        case visualAnnotationURL = "visual_annotation_url"
         case collectionIds = "collection_ids"
         case tagIds = "tag_ids"
         case createdAt = "created_at"
         case updatedAt = "updated_at"
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(String.self, forKey: .id)
+        assetLocalIdentifier = try container.decode(String.self, forKey: .assetLocalIdentifier)
+        captureDate = try container.decodeIfPresent(Date.self, forKey: .captureDate)
+        annotationText = try container.decodeIfPresent(String.self, forKey: .annotationText)
+        hasVisualAnnotation = try container.decodeIfPresent(Bool.self, forKey: .hasVisualAnnotation) ?? false
+        visualAnnotationURL = try container.decodeIfPresent(String.self, forKey: .visualAnnotationURL)
+        collectionIds = try container.decodeIfPresent([String].self, forKey: .collectionIds) ?? []
+        tagIds = try container.decodeIfPresent([String].self, forKey: .tagIds) ?? []
+        createdAt = try container.decode(Date.self, forKey: .createdAt)
+        updatedAt = try container.decode(Date.self, forKey: .updatedAt)
     }
 
     static let mock = ScreenshotRecord(

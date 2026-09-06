@@ -4,6 +4,7 @@
 //
 
 import Foundation
+import PencilKit
 @testable import Screenbase
 import Testing
 import UIKit
@@ -124,5 +125,45 @@ struct ScreenshotDetailViewModel_Tests {
         let record = try #require(metadata.screenshots.first)
         #expect(Set(record.tagIds) == [tag.id])
         #expect(sut.isMembershipSheetPresented == false)
+    }
+
+    @Test("On/Original toggle controls share image compositing")
+    @MainActor
+    func annotationVisibilityControlsShareImage() async throws {
+        let drawings = InMemoryAnnotationDrawingStore()
+        let metadata = MetadataManager(
+            local: InMemoryLocalMetadataStore(),
+            remote: MockMetadataService(),
+            drawingStore: drawings,
+            imageUpload: MockImageUploadService()
+        )
+        var record = ScreenshotRecord.mock
+        record.hasVisualAnnotation = true
+        try await metadata.upsertScreenshot(record)
+
+        let base = try #require(UIImage(systemName: "photo"))
+        let photos = PhotosManager(service: MockPhotosService(
+            status: .authorized,
+            fullImages: [record.assetLocalIdentifier: base]
+        ))
+        let sut = ScreenshotDetailViewModel(
+            screenshotId: record.id,
+            metadataManager: metadata,
+            photosManager: photos,
+            imageTargetSize: CGSize(width: 100, height: 100),
+            showAnnotationsByDefault: true
+        )
+
+        let emptyDrawing = PKDrawing().dataRepresentation()
+        try drawings.saveDrawing(screenshotId: record.id, data: emptyDrawing)
+        await sut.loadImageIfNeeded()
+        sut.refreshOverlayImage()
+
+        #expect(sut.areAnnotationsVisible == true)
+        #expect(sut.shareImage != nil)
+
+        sut.toggleAnnotationsVisible()
+        #expect(sut.areAnnotationsVisible == false)
+        #expect(sut.shareImage === sut.image)
     }
 }

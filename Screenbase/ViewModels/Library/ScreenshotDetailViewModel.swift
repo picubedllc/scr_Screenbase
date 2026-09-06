@@ -25,7 +25,10 @@ final class ScreenshotDetailViewModel {
 
     var image: UIImage?
     var imageState: ImageState = .loading
+    var overlayImage: UIImage?
+    var areAnnotationsVisible: Bool
     var isAnnotationEditorPresented = false
+    var isMarkupEditorPresented = false
     var annotationDraft = ""
     var membershipSheetMode: MembershipSheetMode?
     var selectedCollectionIds: Set<String> = []
@@ -48,12 +51,16 @@ final class ScreenshotDetailViewModel {
         screenshotId: String,
         metadataManager: MetadataManager,
         photosManager: PhotosManager,
-        imageTargetSize: CGSize
+        imageTargetSize: CGSize,
+        showAnnotationsByDefault: Bool = UserDefaults.standard.bool(
+            forKey: SettingsViewModel.Keys.showAnnotationsByDefault
+        )
     ) {
         self.screenshotId = screenshotId
         self.metadataManager = metadataManager
         self.photosManager = photosManager
         self.imageTargetSize = imageTargetSize
+        areAnnotationsVisible = showAnnotationsByDefault
     }
 
     var screenshot: ScreenshotRecord? {
@@ -78,6 +85,28 @@ final class ScreenshotDetailViewModel {
 
     var canOpenFullscreen: Bool {
         image != nil
+    }
+
+    var canMarkup: Bool {
+        image != nil
+    }
+
+    var hasVisualAnnotation: Bool {
+        screenshot?.hasVisualAnnotation == true
+    }
+
+    /// Image passed to the share sheet — annotated when On, original when Original.
+    var shareImage: UIImage? {
+        guard let image else { return nil }
+        guard areAnnotationsVisible, let overlayImage else { return image }
+        return AnnotationCompositor.composite(base: image, overlay: overlayImage)
+    }
+
+    /// Image shown in detail / fullscreen respecting the On/Original toggle.
+    var displayedImage: UIImage? {
+        guard let image else { return nil }
+        guard areAnnotationsVisible, let overlayImage else { return image }
+        return AnnotationCompositor.composite(base: image, overlay: overlayImage)
     }
 
     var isMembershipSheetPresented: Bool {
@@ -125,6 +154,10 @@ final class ScreenshotDetailViewModel {
         isAnnotationEditorPresented
     }
 
+    var isMarkupActionActive: Bool {
+        isMarkupEditorPresented
+    }
+
     var isTagsActionActive: Bool {
         membershipSheetMode == .tags
     }
@@ -150,11 +183,47 @@ final class ScreenshotDetailViewModel {
         )
         image = loaded
         imageState = loaded == nil ? .missing : .loaded
+        refreshOverlayImage()
+    }
+
+    func refreshOverlayImage() {
+        guard hasVisualAnnotation, let image else {
+            overlayImage = nil
+            return
+        }
+        if let data = metadataManager.loadDrawingData(screenshotId: screenshotId),
+           let overlay = AnnotationCompositor.overlayImage(
+               from: data,
+               canvasSize: image.size,
+               scale: image.scale
+           )
+        {
+            overlayImage = overlay
+            return
+        }
+        overlayImage = nil
+    }
+
+    func toggleAnnotationsVisible() {
+        areAnnotationsVisible.toggle()
     }
 
     func presentAnnotationEditor() {
         annotationDraft = screenshot?.annotationText ?? ""
         isAnnotationEditorPresented = true
+    }
+
+    func presentMarkupEditor() {
+        guard canMarkup else { return }
+        isMarkupEditorPresented = true
+    }
+
+    func markupEditorDidDismiss() {
+        isMarkupEditorPresented = false
+        refreshOverlayImage()
+        if hasVisualAnnotation {
+            areAnnotationsVisible = true
+        }
     }
 
     func saveAnnotation() async {
