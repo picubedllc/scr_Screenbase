@@ -36,6 +36,10 @@ final class ScreenshotDetailViewModel {
     var membershipNameEditorMode: MembershipNameEditorMode?
     var membershipNameDraft = ""
     var isSharePresented = false
+    var isShareOptionsPresented = false
+    var isExportingOCR = false
+    var lastOCRText: String?
+    var shareActivityItems: [Any] = []
     var isFullscreenPresented = false
 
     enum MembershipNameEditorMode: Equatable {
@@ -45,6 +49,7 @@ final class ScreenshotDetailViewModel {
 
     private let metadataManager: MetadataManager
     private let photosManager: PhotosManager
+    private let ocrService: any ScreenshotOCRService
     private let imageTargetSize: CGSize
 
     init(
@@ -54,12 +59,14 @@ final class ScreenshotDetailViewModel {
         imageTargetSize: CGSize,
         showAnnotationsByDefault: Bool = UserDefaults.standard.bool(
             forKey: SettingsViewModel.Keys.showAnnotationsByDefault
-        )
+        ),
+        ocrService: any ScreenshotOCRService = VisionScreenshotOCRService()
     ) {
         self.screenshotId = screenshotId
         self.metadataManager = metadataManager
         self.photosManager = photosManager
         self.imageTargetSize = imageTargetSize
+        self.ocrService = ocrService
         areAnnotationsVisible = showAnnotationsByDefault
     }
 
@@ -310,7 +317,32 @@ final class ScreenshotDetailViewModel {
 
     func presentShare() {
         guard canShare else { return }
+        isShareOptionsPresented = true
+    }
+
+    func presentShareImage() {
+        guard let shareImage else { return }
+        shareActivityItems = [shareImage]
         isSharePresented = true
+    }
+
+    func presentShareOCRText() async {
+        guard let image = shareImage ?? image else { return }
+        isExportingOCR = true
+        defer { isExportingOCR = false }
+        do {
+            let text = try await ocrService.recognizeText(in: image)
+            lastOCRText = text
+            print("[Screenbase OCR] screenshotId=\(screenshotId)\n\(text)")
+            let payload = text.isEmpty ? "(No text recognized)" : text
+            shareActivityItems = [payload]
+            isSharePresented = true
+        } catch {
+            lastOCRText = nil
+            print("[Screenbase OCR] failed screenshotId=\(screenshotId) error=\(error)")
+            shareActivityItems = ["(OCR failed)"]
+            isSharePresented = true
+        }
     }
 
     func presentFullscreen() {

@@ -107,10 +107,26 @@ struct ScreenshotDetailView: View {
                 get: { viewModel.isSharePresented },
                 set: { viewModel.isSharePresented = $0 }
             )) {
-                if let image = viewModel.shareImage {
-                    ShareActivityView(activityItems: [image])
-                        .presentationDetents([.medium, .large])
+                ShareActivityView(activityItems: viewModel.shareActivityItems)
+                    .presentationDetents([.medium, .large])
+            }
+            .confirmationDialog(
+                "Share",
+                isPresented: Binding(
+                    get: { viewModel.isShareOptionsPresented },
+                    set: { viewModel.isShareOptionsPresented = $0 }
+                ),
+                titleVisibility: .visible
+            ) {
+                Button("Share Image") {
+                    viewModel.presentShareImage()
                 }
+                Button("Export OCR Text") {
+                    Task { await viewModel.presentShareOCRText() }
+                }
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                Text("Photos originals are never overwritten.")
             }
             .fullScreenCover(isPresented: Binding(
                 get: { viewModel.isMarkupEditorPresented },
