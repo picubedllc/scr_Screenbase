@@ -136,6 +136,13 @@ struct ScreenshotDetailView: View {
                         .presentationDetents([.medium, .large])
                 }
             }
+            .sheet(isPresented: Binding(
+                get: { viewModel.isOCRTextPresented },
+                set: { viewModel.isOCRTextPresented = $0 }
+            )) {
+                OCRTextSheet(viewModel: viewModel)
+                    .presentationDetents([.medium, .large])
+            }
             .fullScreenCover(isPresented: Binding(
                 get: { viewModel.isMarkupEditorPresented },
                 set: { presented in
@@ -263,6 +270,15 @@ struct ScreenshotDetailView: View {
                 }
 
                 ScreenshotDetailActionButton(
+                    icon: .clipboardText,
+                    title: "Copy Text",
+                    isActive: viewModel.isOCRTextActionActive,
+                    isEnabled: viewModel.canShowOCRText
+                ) {
+                    Task { await viewModel.presentOCRText() }
+                }
+
+                ScreenshotDetailActionButton(
                     icon: .export,
                     title: "Share",
                     isActive: viewModel.isShareActionActive,
@@ -360,6 +376,69 @@ struct ScreenshotDetailView: View {
             }
         case nil:
             EmptyView()
+        }
+    }
+}
+
+private struct OCRTextSheet: View {
+    @Bindable var viewModel: ScreenshotDetailViewModel
+
+    var body: some View {
+        NavigationStack {
+            Group {
+                if viewModel.isLoadingOCRText {
+                    ProgressView("Reading text…")
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else if let error = viewModel.ocrLoadError {
+                    ContentUnavailableView(
+                        "Couldn't read text",
+                        systemImage: "text.viewfinder",
+                        description: Text(error)
+                    )
+                } else if let text = viewModel.ocrDisplayText, !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    ScrollView {
+                        Text(text)
+                            .font(.system(size: 16))
+                            .foregroundStyle(ScreenbaseColors.ink)
+                            .textSelection(.enabled)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(ScreenbaseMetrics.edgePadding)
+                    }
+                } else if viewModel.screenshot?.ocrIndexedAt == nil {
+                    ContentUnavailableView(
+                        "Indexing…",
+                        systemImage: "text.viewfinder",
+                        description: Text("OCR is still running for this screenshot. Try again in a moment.")
+                    )
+                } else {
+                    ContentUnavailableView(
+                        "No text found",
+                        systemImage: "text.viewfinder",
+                        description: Text("This screenshot doesn't contain recognizable text.")
+                    )
+                }
+            }
+            .screenbaseBackground()
+            .navigationTitle("Copy Text")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Done") {
+                        viewModel.isOCRTextPresented = false
+                    }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button(viewModel.didCopyOCRText ? "Copied" : "Copy All") {
+                        viewModel.copyAllOCRText()
+                    }
+                    .disabled(
+                        viewModel.isLoadingOCRText
+                            || (viewModel.ocrDisplayText ?? "")
+                            .trimmingCharacters(in: .whitespacesAndNewlines)
+                            .isEmpty
+                    )
+                }
+            }
         }
     }
 }
