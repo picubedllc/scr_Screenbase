@@ -85,6 +85,7 @@ struct CollectionDetailView: View {
                     LibraryScreenshotTileView(
                         assetLocalIdentifier: record.assetLocalIdentifier,
                         image: thumbnailLoader.image(for: record.assetLocalIdentifier),
+                        isMissing: thumbnailLoader.isMissing(assetLocalIdentifier: record.assetLocalIdentifier),
                         onTap: {
                             viewModel.handleTileTap(screenshotId: record.id)
                         }

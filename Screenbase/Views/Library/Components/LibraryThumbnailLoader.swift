@@ -12,6 +12,8 @@ import UIKit
 @Observable
 final class LibraryThumbnailLoader {
     private(set) var images: [String: UIImage] = [:]
+    /// Asset IDs that finished loading with no image (deleted / unavailable in Photos).
+    private(set) var missingAssetIdentifiers: Set<String> = []
 
     private let photosManager: PhotosManager
     private var inFlight: Set<String> = []
@@ -26,8 +28,15 @@ final class LibraryThumbnailLoader {
         images[assetLocalIdentifier]
     }
 
+    func isMissing(assetLocalIdentifier: String) -> Bool {
+        missingAssetIdentifiers.contains(assetLocalIdentifier)
+    }
+
     func loadIfNeeded(assetLocalIdentifier: String) {
-        guard images[assetLocalIdentifier] == nil, !inFlight.contains(assetLocalIdentifier) else { return }
+        guard images[assetLocalIdentifier] == nil,
+              !missingAssetIdentifiers.contains(assetLocalIdentifier),
+              !inFlight.contains(assetLocalIdentifier)
+        else { return }
         inFlight.insert(assetLocalIdentifier)
         Task {
             let image = await photosManager.thumbnailImage(
@@ -36,6 +45,9 @@ final class LibraryThumbnailLoader {
             )
             if let image {
                 images[assetLocalIdentifier] = image
+                missingAssetIdentifiers.remove(assetLocalIdentifier)
+            } else {
+                missingAssetIdentifiers.insert(assetLocalIdentifier)
             }
             inFlight.remove(assetLocalIdentifier)
         }

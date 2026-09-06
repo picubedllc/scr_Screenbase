@@ -172,4 +172,25 @@ struct LibraryViewModel_Tests {
         #expect(sut.selectedScreenshotIds.isEmpty)
         #expect(sut.isAssignSheetPresented == false)
     }
+
+    @Test("Deleting selected screenshots removes metadata and exits select mode")
+    @MainActor
+    func deleteSelectedScreenshotsRemovesMetadata() async throws {
+        let metadata = MetadataManager(local: InMemoryLocalMetadataStore(), remote: MockMetadataService())
+        try await metadata.upsertScreenshot(ScreenshotRecord(id: "a", assetLocalIdentifier: "a"))
+        try await metadata.upsertScreenshot(ScreenshotRecord(id: "b", assetLocalIdentifier: "b"))
+        let sut = LibraryViewModel(
+            metadataManager: metadata,
+            screenshotManager: ScreenshotManager(service: MockScreenshotService(screenshots: []), index: metadata)
+        )
+
+        sut.toggleSelecting()
+        sut.handleTileTap(screenshotId: "a")
+        sut.handleTileTap(screenshotId: "b")
+        await sut.deleteSelectedScreenshots()
+
+        #expect(metadata.screenshots.isEmpty)
+        #expect(sut.isSelecting == false)
+        #expect(sut.selectedScreenshotIds.isEmpty)
+    }
 }

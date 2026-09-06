@@ -11,11 +11,13 @@ struct ScreenshotDetailView: View {
     @Environment(MetadataManager.self) private var metadataManager
     @Environment(PhotosManager.self) private var photosManager
     @Environment(\.displayScale) private var displayScale
+    @Environment(\.dismiss) private var dismiss
 
     let screenshotId: String
     @Binding var tabBarVisibility: Visibility
 
     @State private var viewModel: ScreenshotDetailViewModel?
+    @State private var isRemoveConfirmPresented = false
 
     init(screenshotId: String, tabBarVisibility: Binding<Visibility> = .constant(.hidden)) {
         self.screenshotId = screenshotId
@@ -152,7 +154,7 @@ struct ScreenshotDetailView: View {
                     ProgressView()
                 }
             case .missing:
-                missingAssetPlaceholder
+                missingAssetPlaceholder(viewModel: viewModel)
             case .loaded:
                 if let image = viewModel.displayedImage ?? viewModel.image {
                     Color.black
@@ -170,15 +172,15 @@ struct ScreenshotDetailView: View {
                         .accessibilityLabel("Screenshot")
                         .accessibilityHint("Shows full screen")
                 } else {
-                    missingAssetPlaceholder
+                    missingAssetPlaceholder(viewModel: viewModel)
                 }
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
-    private var missingAssetPlaceholder: some View {
-        VStack(spacing: 12) {
+    private func missingAssetPlaceholder(viewModel: ScreenshotDetailViewModel) -> some View {
+        VStack(spacing: 16) {
             Ph.imageBroken.regular
                 .color(ScreenbaseColors.gray)
                 .frame(width: 40, height: 40)
@@ -190,6 +192,27 @@ struct ScreenshotDetailView: View {
                 .foregroundStyle(ScreenbaseColors.gray)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 24)
+
+            Button("Remove from Library") {
+                isRemoveConfirmPresented = true
+            }
+            .buttonStyle(.screenbaseSecondary)
+            .padding(.horizontal, 40)
+            .confirmationDialog(
+                "Remove from Library?",
+                isPresented: $isRemoveConfirmPresented,
+                titleVisibility: .visible
+            ) {
+                Button("Remove", role: .destructive) {
+                    Task {
+                        await viewModel.removeFromLibrary()
+                        dismiss()
+                    }
+                }
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                Text("Removes Screenbase metadata only. Nothing in Photos is deleted.")
+            }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(ScreenbaseColors.lightGray)
