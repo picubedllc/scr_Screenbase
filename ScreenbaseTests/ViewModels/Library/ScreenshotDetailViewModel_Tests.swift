@@ -38,6 +38,23 @@ struct ScreenshotDetailViewModel_Tests {
         #expect(sut.screenshot?.annotationText == "Login flow")
     }
 
+    @Test("Remove from library deletes metadata entry")
+    @MainActor
+    func removeFromLibraryDeletesMetadata() async throws {
+        let metadata = MetadataManager(local: InMemoryLocalMetadataStore(), remote: MockMetadataService())
+        try await metadata.upsertScreenshot(.mock)
+        let sut = ScreenshotDetailViewModel(
+            screenshotId: ScreenshotRecord.mock.id,
+            metadataManager: metadata,
+            photosManager: PhotosManager(service: MockPhotosService(status: .authorized)),
+            imageTargetSize: CGSize(width: 100, height: 100)
+        )
+
+        await sut.removeFromLibrary()
+
+        #expect(metadata.screenshots.isEmpty)
+    }
+
     @Test("Presenting annotation editor opens notes sheet")
     @MainActor
     func presentingAnnotationEditorOpensSheet() throws {

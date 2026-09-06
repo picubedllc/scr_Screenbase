@@ -95,6 +95,10 @@ final class LibraryViewModel {
         isSelecting && !selectedScreenshotIds.isEmpty
     }
 
+    var canDeleteSelection: Bool {
+        isSelecting && !selectedScreenshotIds.isEmpty
+    }
+
     var assignableCollections: [CollectionRecord] {
         metadataManager.collections.sorted {
             $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending
@@ -242,6 +246,19 @@ final class LibraryViewModel {
         resetAssignDraft()
         isSelecting = false
         selectedScreenshotIds.removeAll()
+    }
+
+    /// Removes selected screenshot metadata entries (Photos originals are untouched).
+    func deleteSelectedScreenshots() async {
+        let ids = Array(selectedScreenshotIds)
+        guard !ids.isEmpty else { return }
+        for id in ids {
+            try? await metadataManager.deleteScreenshot(id: id)
+        }
+        selectedScreenshotIds.removeAll()
+        isSelecting = false
+        isAssignSheetPresented = false
+        resetAssignDraft()
     }
 
     func clearDetail() {

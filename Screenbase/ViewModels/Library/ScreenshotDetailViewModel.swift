@@ -306,4 +306,9 @@ final class ScreenshotDetailViewModel {
         guard canOpenFullscreen else { return }
         isFullscreenPresented = true
     }
+
+    /// Removes this screenshot's metadata from Screenbase (does not delete the Photos asset).
+    func removeFromLibrary() async {
+        try? await metadataManager.deleteScreenshot(id: screenshotId)
+    }
 }
