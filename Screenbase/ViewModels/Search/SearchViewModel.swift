@@ -130,6 +130,12 @@ final class SearchViewModel {
             )
         }
         contentState = results.isEmpty ? .emptyResults : .results
+        #if DEBUG
+        if lastQueryElapsedNanoseconds > 0 {
+            let ms = Double(lastQueryElapsedNanoseconds) / 1_000_000
+            print(String(format: "[Screenbase Search] \"%@\" → %d hits in %.1f ms", trimmed, results.count, ms))
+        }
+        #endif
     }
 
     static func search(

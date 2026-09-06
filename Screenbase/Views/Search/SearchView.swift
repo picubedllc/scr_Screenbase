@@ -153,15 +153,24 @@ struct SearchView: View {
         ScrollView {
             LazyVGrid(columns: columns, spacing: ScreenbaseMetrics.collectionGridSpacing) {
                 ForEach(viewModel.results) { item in
-                    LibraryScreenshotTileView(
-                        assetLocalIdentifier: item.assetLocalIdentifier,
-                        image: thumbnailLoader.image(for: item.assetLocalIdentifier),
-                        showsPlaceholder: thumbnailLoader.image(for: item.assetLocalIdentifier) == nil
-                    ) {
-                        viewModel.openDetail(id: item.id)
-                    }
-                    .task(id: item.assetLocalIdentifier) {
-                        thumbnailLoader.loadIfNeeded(assetLocalIdentifier: item.assetLocalIdentifier)
+                    VStack(alignment: .leading, spacing: 6) {
+                        LibraryScreenshotTileView(
+                            assetLocalIdentifier: item.assetLocalIdentifier,
+                            image: thumbnailLoader.image(for: item.assetLocalIdentifier),
+                            showsPlaceholder: thumbnailLoader.image(for: item.assetLocalIdentifier) == nil,
+                            isMissing: thumbnailLoader.isMissing(assetLocalIdentifier: item.assetLocalIdentifier)
+                        ) {
+                            viewModel.openDetail(id: item.id)
+                        }
+                        .task(id: item.assetLocalIdentifier) {
+                            thumbnailLoader.loadIfNeeded(assetLocalIdentifier: item.assetLocalIdentifier)
+                        }
+
+                        Text(item.matchSources.joined(separator: " · "))
+                            .font(.system(size: 11, weight: .medium))
+                            .foregroundStyle(ScreenbaseColors.gray)
+                            .lineLimit(1)
+                            .accessibilityLabel("Matched \(item.matchSources.joined(separator: ", "))")
                     }
                 }
             }
