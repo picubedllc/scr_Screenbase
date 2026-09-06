@@ -20,6 +20,10 @@ final class PhotosManager {
         authorizationStatus = service.authorizationStatus
     }
 
+    func refreshAuthorizationStatus() {
+        authorizationStatus = service.authorizationStatus
+    }
+
     func requestAuthorization() async -> PhotosAuthorizationStatus {
         authorizationStatus = await service.requestAuthorization()
         return authorizationStatus
