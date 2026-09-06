@@ -57,7 +57,7 @@ struct ScreenshotDetailViewModel_Tests {
 
     @Test("Presenting annotation editor opens notes sheet")
     @MainActor
-    func presentingAnnotationEditorOpensSheet() throws {
+    func presentingAnnotationEditorOpensSheet() {
         let metadata = MetadataManager(local: InMemoryLocalMetadataStore(), remote: MockMetadataService())
         let sut = ScreenshotDetailViewModel(
             screenshotId: ScreenshotRecord.mock.id,
