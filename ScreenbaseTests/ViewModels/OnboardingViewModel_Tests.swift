@@ -105,5 +105,46 @@ struct OnboardingViewModel_Tests {
         #expect(sut.screenshotCount == nil)
         #expect(sut.isScanning == false)
         #expect(sut.canContinueFromScan)
+        #expect(sut.showsOpenSettings)
+    }
+
+    @Test("Limited photos shows open settings and still scans")
+    @MainActor
+    func limitedPhotosShowsOpenSettingsAndScans() async {
+        let photos = PhotosManager(service: MockPhotosService(status: .limited, screenshotCount: 4))
+        let sut = OnboardingViewModel(photosManager: photos, step: .initialScan)
+
+        await sut.startInitialScanIfNeeded()
+
+        #expect(sut.screenshotCount == 4)
+        #expect(sut.showsOpenSettings)
+    }
+
+    @Test("Authorized scan hides open settings")
+    @MainActor
+    func authorizedScanHidesOpenSettings() async {
+        let photos = PhotosManager(service: MockPhotosService(status: .authorized, screenshotCount: 2))
+        let sut = OnboardingViewModel(photosManager: photos, step: .initialScan)
+
+        await sut.startInitialScanIfNeeded()
+
+        #expect(sut.showsOpenSettings == false)
+    }
+
+    @Test("Refresh photos status picks up service changes")
+    @MainActor
+    func refreshPhotosStatusUpdatesFromService() {
+        let service = MockPhotosService(status: .denied)
+        let photos = PhotosManager(service: service)
+        let sut = OnboardingViewModel(photosManager: photos, step: .initialScan)
+
+        #expect(sut.photosStatus == .denied)
+        #expect(sut.showsOpenSettings)
+
+        service.authorizationStatus = .authorized
+        sut.refreshPhotosStatus()
+
+        #expect(sut.photosStatus == .authorized)
+        #expect(sut.showsOpenSettings == false)
     }
 }

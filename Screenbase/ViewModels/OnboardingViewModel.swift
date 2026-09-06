@@ -51,6 +51,11 @@ final class OnboardingViewModel {
         !isScanning
     }
 
+    /// Denied or limited — user can open Settings to grant full access.
+    var showsOpenSettings: Bool {
+        step == .initialScan && (photosStatus == .denied || photosStatus == .limited)
+    }
+
     func continueFromWelcome() {
         step = .photosPermission
         photosStatus = photosManager.authorizationStatus
@@ -66,6 +71,15 @@ final class OnboardingViewModel {
     func skipPhotosPermission() {
         photosStatus = photosManager.authorizationStatus
         step = .initialScan
+    }
+
+    func openSystemSettings() {
+        SystemSettings.openAppSettings()
+    }
+
+    func refreshPhotosStatus() {
+        photosManager.refreshAuthorizationStatus()
+        photosStatus = photosManager.authorizationStatus
     }
 
     func startInitialScanIfNeeded() async {

@@ -7,10 +7,12 @@ import PhosphorSwift
 import RevenueCatUI
 import StoreKit
 import SwiftUI
+import UIKit
 
 struct SettingsListView: View {
     @Bindable var viewModel: SettingsViewModel
     @Environment(AppState.self) private var appState
+    @Environment(PhotosManager.self) private var photosManager
     @Environment(PurchaseManager.self) private var purchaseManager
     @Environment(\.requestReview) private var requestReview
     @State private var isRestoreAlertPresented = false
@@ -50,6 +52,16 @@ struct SettingsListView: View {
             .screenbaseListRow()
 
             Section("Import") {
+                Button {
+                    SystemSettings.openAppSettings()
+                } label: {
+                    SettingsRowView(
+                        icon: .imageSquare,
+                        title: SettingsCopy.PhotosAccess.title,
+                        value: photosAccessValue
+                    )
+                }
+
                 Toggle(isOn: $viewModel.deleteAfterImport) {
                     SettingsRowView(icon: .trash, title: "Delete After Import")
                 }
@@ -204,6 +216,22 @@ struct SettingsListView: View {
             Button("Cancel", role: .cancel) {}
         } message: {
             Text("You'll go through the intro again.")
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
+            photosManager.refreshAuthorizationStatus()
+        }
+    }
+
+    private var photosAccessValue: String {
+        switch photosManager.authorizationStatus {
+        case .authorized:
+            SettingsCopy.PhotosAccess.authorized
+        case .limited:
+            SettingsCopy.PhotosAccess.limited
+        case .denied:
+            SettingsCopy.PhotosAccess.denied
+        case .notDetermined:
+            SettingsCopy.PhotosAccess.notDetermined
         }
     }
 }

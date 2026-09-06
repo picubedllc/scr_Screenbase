@@ -29,7 +29,6 @@ final class ScreenshotDetailViewModel {
     var areAnnotationsVisible: Bool
     var isAnnotationEditorPresented = false
     var isMarkupEditorPresented = false
-    var annotationDraft = ""
     var membershipSheetMode: MembershipSheetMode?
     var selectedCollectionIds: Set<String> = []
     var selectedTagIds: Set<String> = []
@@ -209,7 +208,6 @@ final class ScreenshotDetailViewModel {
     }
 
     func presentAnnotationEditor() {
-        annotationDraft = screenshot?.annotationText ?? ""
         isAnnotationEditorPresented = true
     }
 
@@ -224,15 +222,6 @@ final class ScreenshotDetailViewModel {
         if hasVisualAnnotation {
             areAnnotationsVisible = true
         }
-    }
-
-    func saveAnnotation() async {
-        let trimmed = annotationDraft.trimmingCharacters(in: .whitespacesAndNewlines)
-        try? await metadataManager.updateAnnotation(
-            screenshotId: screenshotId,
-            text: trimmed.isEmpty ? nil : trimmed
-        )
-        isAnnotationEditorPresented = false
     }
 
     func presentTagsSheet() {

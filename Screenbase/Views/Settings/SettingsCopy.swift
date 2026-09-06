@@ -6,6 +6,14 @@
 import Foundation
 
 enum SettingsCopy {
+    enum PhotosAccess {
+        static let title = "Photos Access"
+        static let authorized = "Full access"
+        static let limited = "Limited"
+        static let denied = "Off"
+        static let notDetermined = "Not set"
+    }
+
     enum ImportExisting {
         static let title = "Import Existing Screenshots"
         static let message = """

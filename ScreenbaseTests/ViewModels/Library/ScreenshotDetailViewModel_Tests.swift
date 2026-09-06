@@ -55,27 +55,20 @@ struct ScreenshotDetailViewModel_Tests {
         #expect(metadata.screenshots.isEmpty)
     }
 
-    @Test("Saving annotation updates metadata")
+    @Test("Presenting annotation editor opens notes sheet")
     @MainActor
-    func savingAnnotationUpdatesMetadata() async throws {
-        // Given
+    func presentingAnnotationEditorOpensSheet() throws {
         let metadata = MetadataManager(local: InMemoryLocalMetadataStore(), remote: MockMetadataService())
-        try await metadata.upsertScreenshot(.mock)
         let sut = ScreenshotDetailViewModel(
             screenshotId: ScreenshotRecord.mock.id,
             metadataManager: metadata,
             photosManager: PhotosManager(service: MockPhotosService(status: .authorized)),
             imageTargetSize: CGSize(width: 100, height: 100)
         )
+
         sut.presentAnnotationEditor()
-        sut.annotationDraft = "Updated note"
 
-        // When
-        await sut.saveAnnotation()
-
-        // Then
-        #expect(metadata.screenshots.first?.annotationText == "Updated note")
-        #expect(sut.isAnnotationEditorPresented == false)
+        #expect(sut.isAnnotationEditorPresented)
     }
 
     @Test("Applying collections membership replaces collection set")
